@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface DealerJpaRepository extends JpaRepository<DealerJpaEntity, UUID> {
     Optional<DealerJpaEntity> findByPhoneNumber(String phoneNumber);
     Optional<DealerJpaEntity> findByEmail(String email);
+    Optional<DealerJpaEntity> findByPhoneNumberOrEmail(String phoneNumber,String email);
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsByEmail(String email);
 }

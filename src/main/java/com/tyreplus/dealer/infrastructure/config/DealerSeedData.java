@@ -13,10 +13,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 @Profile("local")
@@ -49,7 +51,7 @@ public class DealerSeedData implements CommandLineRunner {
             BusinessHours hours = new BusinessHours(
                     LocalTime.parse("09:00 AM", TIME_FORMATTER),
                     LocalTime.parse("09:00 PM", TIME_FORMATTER),
-                    false
+                    new HashSet<>(List.of(new DayOfWeek[]{DayOfWeek.SUNDAY,DayOfWeek.MONDAY}))
             );
 
             Dealer dealer = Dealer.builder()
@@ -64,7 +66,7 @@ public class DealerSeedData implements CommandLineRunner {
             Dealer savedDealer = dealerRepository.save(dealer);
             walletRepository.save(new Wallet(savedDealer.getId(), 5000));
 
-            System.out.println("✅ Seeded Dealer: " + savedDealer.getBusinessName());
+            System.out.println("Seeded Dealer: " + savedDealer.getBusinessName());
         }
     }
 }

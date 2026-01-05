@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.DayOfWeek;
+import java.util.Set;
+
 /**
  * Request DTO for updating Dealer Profile.
  * Java 21 Record with Jakarta Validation.
@@ -61,7 +64,7 @@ public record UpdateDealerProfileRequest(
             @NotBlank(message = "Close time is required")
             String closeTime,
             @NotNull(message = "Open days are required")
-            java.util.List<String> openDays
+            Set<DayOfWeek> openDays
     ) {
     }
 }

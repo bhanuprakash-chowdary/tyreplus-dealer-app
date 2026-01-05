@@ -7,6 +7,8 @@ import com.tyreplus.dealer.domain.valueobject.ContactDetails;
 import com.tyreplus.dealer.infrastructure.persistence.entity.DealerJpaEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 /**
  * Mapper between domain Dealer entity and JPA entity.
  */
@@ -33,7 +35,7 @@ public class DealerMapper {
                 .country(dealer.getAddress() != null ? dealer.getAddress().country() : null)
                 .openingTime(dealer.getBusinessHours() != null ? dealer.getBusinessHours().openingTime() : null)
                 .closingTime(dealer.getBusinessHours() != null ? dealer.getBusinessHours().closingTime() : null)
-                .isOpenOnWeekends(dealer.getBusinessHours() != null ? dealer.getBusinessHours().isOpenOnWeekends() : false)
+                .openDays(dealer.getBusinessHours() != null ? dealer.getBusinessHours().openDays() : Set.of())
                 .build();
     }
 
@@ -59,7 +61,7 @@ public class DealerMapper {
         BusinessHours businessHours = new BusinessHours(
                 jpaEntity.getOpeningTime(),
                 jpaEntity.getClosingTime(),
-                jpaEntity.isOpenOnWeekends()
+                jpaEntity.getOpenDays()
         );
 
         return Dealer.builder()
@@ -67,6 +69,7 @@ public class DealerMapper {
                 .businessName(jpaEntity.getBusinessName())
                 .ownerName(jpaEntity.getOwnerName())
                 .isVerified(jpaEntity.isVerified())
+                .passwordHash(jpaEntity.getPasswordHash())
                 .contactDetails(contactDetails)
                 .address(address)
                 .businessHours(businessHours)

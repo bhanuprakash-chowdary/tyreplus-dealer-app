@@ -1,6 +1,8 @@
 package com.tyreplus.dealer.domain.valueobject;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.Set;
 
 /**
  * Value Object representing Business Hours.
@@ -9,7 +11,7 @@ import java.time.LocalTime;
 public record BusinessHours(
         LocalTime openingTime,
         LocalTime closingTime,
-        boolean isOpenOnWeekends
+        Set<DayOfWeek> openDays
 ) {
     public BusinessHours {
         if (openingTime == null) {
@@ -18,6 +20,11 @@ public record BusinessHours(
         if (closingTime == null) {
             throw new IllegalArgumentException("Closing time cannot be null");
         }
+
+        if (openDays == null || openDays.isEmpty()) {
+            throw new IllegalArgumentException("At least one open day is required");
+        }
+
         if (closingTime.isBefore(openingTime) || closingTime.equals(openingTime)) {
             throw new IllegalArgumentException("Closing time must be after opening time");
         }
@@ -25,6 +32,10 @@ public record BusinessHours(
 
     public boolean isOpenAt(LocalTime time) {
         return !time.isBefore(openingTime) && !time.isAfter(closingTime);
+    }
+
+    public boolean isOpenOn(DayOfWeek day) {
+        return openDays.contains(day);
     }
 }
 

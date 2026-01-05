@@ -19,7 +19,9 @@ public record DealerDetails(Dealer dealer) implements UserDetails {
     }
 
     @Override
-    public String getPassword() { return ""; } // OTP handled separately
+    public String getPassword() {
+        return dealer.getPasswordHash();
+    }
 
     @Override
     public String getUsername() {

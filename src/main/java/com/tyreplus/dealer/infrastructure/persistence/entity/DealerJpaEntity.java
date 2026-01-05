@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.DayOfWeek;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -34,6 +36,9 @@ public class DealerJpaEntity {
 
     @Column(name = "is_verified", nullable = false)
     private boolean isVerified;
+
+    @Column(name ="password_hash")
+    private String passwordHash;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
@@ -65,7 +70,13 @@ public class DealerJpaEntity {
     @Column(name = "closing_time", nullable = false)
     private java.time.LocalTime closingTime;
 
-    @Column(name = "is_open_on_weekends", nullable = false)
-    private boolean isOpenOnWeekends;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "dealer_open_days",
+            joinColumns = @JoinColumn(name = "dealer_id")
+    )
+    @Column(name = "open_day", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> openDays;
 }
 

@@ -8,10 +8,7 @@ import jakarta.validation.constraints.NotNull;
  * Java 21 Record with Jakarta Validation.
  */
 public record RechargeRequest(
-        @NotNull(message = "Amount is required")
-        @Min(value = 1, message = "Amount must be greater than 0")
-        Integer amount,
-        
+        @NotNull(message = "Package ID is required")
         String packageId
 ) {
 }

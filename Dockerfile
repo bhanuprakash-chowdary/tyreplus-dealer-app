@@ -1,20 +1,14 @@
 # Multi-stage build for Spring Boot application
 # Stage 1: Build the application
-FROM eclipse-temurin:21-jdk-jammy AS builder
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
-
-# Install Maven
-RUN apt-get update && \
-    apt-get install -y maven && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Copy pom.xml first for better layer caching
 COPY pom.xml ./
 
 # Download dependencies (this layer will be cached if pom.xml doesn't change)
-RUN mvn dependency:go-offline -B || true
+RUN mvn dependency:go-offline -B
 
 # Copy source code and build
 COPY src ./src

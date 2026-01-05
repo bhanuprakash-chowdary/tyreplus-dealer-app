@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 @Repository
 public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEntity, UUID> {
-    List<TransactionJpaEntity> findByDealerIdOrderByTimestampDesc(UUID dealerId);
-    List<TransactionJpaEntity> findByWalletIdOrderByTimestampDesc(UUID walletId);
+    List<TransactionJpaEntity> findByDealerIdOrderByCreatedAtDesc(UUID dealerId);
+    List<TransactionJpaEntity> findByWalletIdOrderByCreatedAtDesc(UUID walletId);
 }
 

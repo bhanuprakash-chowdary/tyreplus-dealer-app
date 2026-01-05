@@ -13,6 +13,7 @@ public interface DealerRepository {
     Dealer save(Dealer dealer);
     Optional<Dealer> findById(UUID id);
     Optional<Dealer> findByMobile(String mobile);
+    Optional<Dealer> findByPhoneNumberOrEmail(String identifier);
     Optional<Dealer> findByEmail(String email);
     boolean existsById(UUID id);
     boolean existsByMobile(String mobile);

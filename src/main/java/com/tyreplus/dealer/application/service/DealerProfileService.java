@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.UUID;
 
 
@@ -65,7 +66,7 @@ public class DealerProfileService {
         BusinessHours businessHours = new BusinessHours(
                 parseTime(request.businessHours().openTime()),
                 parseTime(request.businessHours().closeTime()),
-                request.businessHours().openDays().contains("Sat")
+                new HashSet<>(request.businessHours().openDays())
         );
         dealer.updateBusinessHours(businessHours);
 

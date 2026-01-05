@@ -21,7 +21,7 @@ public class Transaction {
     private UUID walletId;
     private UUID dealerId;
     private TransactionType type;
-    private int amount;
+    private int credits;
     private String description;
     private LocalDateTime timestamp;
 
@@ -29,12 +29,12 @@ public class Transaction {
         this.timestamp = LocalDateTime.now();
     }
 
-    public Transaction(UUID walletId, UUID dealerId, TransactionType type, int amount, String description) {
+    public Transaction(UUID walletId, UUID dealerId, TransactionType type, int credits, String description) {
         this();
         this.walletId = walletId;
         this.dealerId = dealerId;
         this.type = type;
-        this.amount = amount;
+        this.credits = credits;
         this.description = description;
     }
 }

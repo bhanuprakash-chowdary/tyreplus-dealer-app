@@ -13,12 +13,16 @@ import com.tyreplus.dealer.domain.valueobject.Address;
 import com.tyreplus.dealer.domain.valueobject.BusinessHours;
 import com.tyreplus.dealer.domain.valueobject.ContactDetails;
 import com.tyreplus.dealer.infrastructure.security.JwtUtil;
+import com.tyreplus.dealer.infrastructure.security.RefreshTokenService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * Application service for handling authentication operations.
@@ -30,16 +34,22 @@ public class AuthService {
     private final WalletRepository walletRepository;
     private final OtpService otpService;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
+    private final PasswordEncoder passwordEncoder;
 
     // Constructor updated to include WalletRepository
     public AuthService(DealerRepository dealerRepository,
                        WalletRepository walletRepository,
                        OtpService otpService,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       RefreshTokenService refreshTokenService,
+                       PasswordEncoder passwordEncoder) {
         this.dealerRepository = dealerRepository;
         this.walletRepository = walletRepository;
         this.otpService = otpService;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public void generateOtp(String mobile) {
@@ -50,27 +60,33 @@ public class AuthService {
      * Login logic: Cleaner exception flow.
      */
     public LoginResponse login(LoginRequest request) {
-        otpService.validateOtp(request.mobile(), request.otp());
 
-        Dealer dealer = dealerRepository.findByMobile(request.mobile())
+        Dealer dealer = dealerRepository.findByPhoneNumberOrEmail(request.identifier())
                 .orElseThrow(() -> new UserNotFoundException(
-                        "Dealer not found with mobile: " + request.mobile() + ". Please register first."));
+                        "Dealer not found with : " + request.identifier() + ". Please register first."));
 
-        String token = jwtUtil.generateToken(
-                request.mobile(),
-                dealer.getId().toString(),
-                "dealer"
-        );
+        // ---- OTP LOGIN ----
+        if (request.otp() != null && !request.otp().isBlank()) {
+            otpService.validateOtp(dealer.getContactDetails().phoneNumber(), request.otp());
+            return issueTokens(dealer);
+        }
 
-        return new LoginResponse(
-                token,
-                new LoginResponse.UserInfo(
-                        dealer.getId().toString(),
-                        dealer.getBusinessName(),
-                        "dealer",
-                        null
-                )
-        );
+        // ---- PASSWORD LOGIN ----
+        if (request.password() != null && !request.password().isBlank()) {
+
+            if (dealer.getPasswordHash() == null) {
+                throw new IllegalArgumentException("Password login not enabled");
+            }
+
+            if (!passwordEncoder.matches(request.password(), dealer.getPasswordHash())) {
+                throw new IllegalArgumentException("Invalid credentials");
+            }
+
+            return issueTokens(dealer);
+        }
+
+        // ---- INVALID REQUEST ----
+        throw new IllegalArgumentException("Either OTP or password must be provided");
     }
 
     /**
@@ -107,7 +123,7 @@ public class AuthService {
         BusinessHours businessHours = new BusinessHours(
                 parseTime(request.businessHours().openTime()),
                 parseTime(request.businessHours().closeTime()),
-                request.businessHours().openDays().contains("Sat")
+                new HashSet<>(request.businessHours().openDays())
         );
 
         // 4. Create and Save Dealer
@@ -127,20 +143,64 @@ public class AuthService {
         walletRepository.save(wallet);
 
         // 6. Token generation
-        String token = jwtUtil.generateToken(
-                request.mobile(),
-                savedDealer.getId().toString(),
+        return issueTokens(savedDealer);
+    }
+
+    @Transactional
+    public void setPassword(UUID dealerId, String rawPassword) {
+
+        Dealer dealer = dealerRepository.findById(dealerId)
+                .orElseThrow(() -> new IllegalArgumentException("Dealer not found"));
+
+        dealer.setPasswordHash(passwordEncoder.encode(rawPassword));
+
+        dealerRepository.save(dealer);
+    }
+
+    public LoginResponse refresh(String refreshToken) {
+
+        UUID dealerId = refreshTokenService.validate(refreshToken);
+
+        Dealer dealer = dealerRepository.findById(dealerId)
+                .orElseThrow(() -> new UserNotFoundException("Dealer not found"));
+
+        String accessToken = jwtUtil.generateToken(
+                dealer.getContactDetails().phoneNumber(),
+                dealer.getId().toString(),
                 "dealer"
         );
 
+        return new LoginResponse(accessToken, refreshToken, toUserInfo(dealer)
+        );
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
+    }
+
+    private LoginResponse issueTokens(Dealer dealer) {
+
+        String accessToken = jwtUtil.generateToken(
+                dealer.getContactDetails().phoneNumber(),
+                dealer.getId().toString(),
+                "dealer"
+        );
+
+        String refreshToken = refreshTokenService.create(dealer.getId());
+
         return new LoginResponse(
-                token,
-                new LoginResponse.UserInfo(
-                        savedDealer.getId().toString(),
-                        savedDealer.getBusinessName(),
-                        "dealer",
-                        null
-                )
+                accessToken,
+                refreshToken,
+                toUserInfo(dealer)
+        );
+    }
+
+    private LoginResponse.UserInfo toUserInfo(Dealer dealer) {
+        return new LoginResponse.UserInfo(
+                dealer.getId().toString(),
+                dealer.getBusinessName(),
+                "dealer",
+                null
         );
     }
 

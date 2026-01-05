@@ -5,6 +5,7 @@ package com.tyreplus.dealer.application.dto;
  */
 public record PaymentOrderResponse(
         String gatewayOrderId,
-        int amount,
-        String currency
+        int credits,
+        String currency,
+        String packageName
 ) {}

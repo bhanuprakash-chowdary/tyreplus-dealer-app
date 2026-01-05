@@ -51,8 +51,8 @@ public class WalletController {
      */
     @PostMapping("/recharge/initiate")
     public ResponseEntity<PaymentOrderResponse> initiate(@AuthenticationPrincipal DealerDetails dealer,
-                                                         @RequestBody int amount) {
-        return ResponseEntity.ok(walletService.initiateRecharge(dealer.getId(), amount));
+                                                         @Valid @RequestBody RechargeRequest request) {
+        return ResponseEntity.ok(walletService.initiateRecharge(dealer.getId(),UUID.fromString(request.packageId())));
     }
 
     /**
@@ -69,11 +69,11 @@ public class WalletController {
      * Recharge wallet.
      * POST /api/v1/dealer/wallet/recharge
      */
-    @PostMapping("/wallet/recharge")
-    public ResponseEntity<WalletResponse> recharge(
+    @PostMapping("/wallet/testRecharge")
+    public ResponseEntity<WalletResponse> testRecharge(
             @AuthenticationPrincipal DealerDetails dealerDetails,
             @Valid @RequestBody RechargeRequest request) {
-        WalletResponse response = walletService.recharge(dealerDetails.getId(), request);
+        WalletResponse response = walletService.testRecharge(dealerDetails.getId(), request);
         return ResponseEntity.ok(response);
     }
 

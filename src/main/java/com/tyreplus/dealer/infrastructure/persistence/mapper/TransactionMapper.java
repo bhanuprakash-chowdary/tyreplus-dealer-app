@@ -20,9 +20,9 @@ public class TransactionMapper {
                 .walletId(transaction.getWalletId())
                 .dealerId(transaction.getDealerId())
                 .type(transaction.getType())
-                .amount(transaction.getAmount())
+                .credits(transaction.getCredits())
                 .description(transaction.getDescription())
-                .timestamp(transaction.getTimestamp())
+                .createdAt(transaction.getTimestamp())
                 .build();
     }
 
@@ -36,9 +36,9 @@ public class TransactionMapper {
                 .walletId(jpaEntity.getWalletId())
                 .dealerId(jpaEntity.getDealerId())
                 .type(jpaEntity.getType())
-                .amount(jpaEntity.getAmount())
+                .credits(jpaEntity.getCredits())
                 .description(jpaEntity.getDescription())
-                .timestamp(jpaEntity.getTimestamp())
+                .timestamp(jpaEntity.getCreatedAt())
                 .build();
     }
 }

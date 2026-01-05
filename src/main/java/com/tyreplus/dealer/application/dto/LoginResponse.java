@@ -6,6 +6,7 @@ package com.tyreplus.dealer.application.dto;
  */
 public record LoginResponse(
         String token,
+        String refreshToken,
         UserInfo user
 ) {
     public record UserInfo(

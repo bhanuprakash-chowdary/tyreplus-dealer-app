@@ -11,31 +11,40 @@ import java.util.UUID;
 
 /**
  * JPA Entity for Wallet.
- * Maps domain entity to database table.
- */
+ * Wallet stores ONLY credits (not money).
+ * */
 @Entity
-@Table(name = "wallets", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "dealer_id")
-})
+@Table(
+        name = "wallets",
+        uniqueConstraints = @UniqueConstraint(columnNames = "dealer_id")
+)
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class WalletJpaEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "dealer_id", nullable = false, unique = true, columnDefinition = "UUID")
+    @Column(name = "dealer_id", nullable = false, unique = true)
     private UUID dealerId;
 
-    @Column(name = "balance", nullable = false)
-    private int balance;
+    /**
+     * Internal credits balance.
+     * NEVER represents real money.
+     */
+    @Column(name = "credits", nullable = false)
+    private int credits;
 
+    /**
+     * Optimistic locking (secondary safety).
+     */
     @Version
-    @Column(name = "version")
-    private Long version; // For optimistic locking
+    @Column(name = "version", nullable = false)
+    private Long version;
 }
 

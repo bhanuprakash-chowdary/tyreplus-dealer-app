@@ -34,7 +34,7 @@ public class DashboardService {
     public DashboardResponse getDashboard(UUID dealerId) {
         // 1. Fetch Wallet Balance
         int walletBalance = walletRepository.findByDealerId(dealerId)
-                .map(Wallet::getBalance)
+                .map(Wallet::getCredits)
                 .orElse(0);
 
         // 2. Fetch Stats Today (Database count is O(1) or O(log n) vs O(n) in Java)

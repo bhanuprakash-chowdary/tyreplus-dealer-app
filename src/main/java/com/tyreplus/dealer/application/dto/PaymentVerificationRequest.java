@@ -10,6 +10,7 @@ public record PaymentVerificationRequest(
         @NotBlank String gatewayOrderId,
         @NotBlank String gatewayPaymentId,
         @NotBlank String gatewaySignature,
-        @Min(1) int amount
+        @Min(1) int amount,
+        @NotBlank String packageId
 ) {}
 

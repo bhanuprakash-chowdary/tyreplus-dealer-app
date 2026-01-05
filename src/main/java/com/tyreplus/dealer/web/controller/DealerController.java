@@ -57,4 +57,5 @@ public class DealerController {
             @AuthenticationPrincipal DealerDetails dealerDetails) {
         return ResponseEntity.ok(dashboardService.getDashboard(dealerDetails.getId()));
     }
+
 }

@@ -7,14 +7,14 @@ import java.util.List;
  * Java 21 Record following DDD principles.
  */
 public record WalletResponse(
-        int balance,
+        int credits,
         List<TransactionResponse> transactions
 ) {
     public record TransactionResponse(
             String id,
             String title,
             String date,
-            int amount,
+            int credits,
             String type
     ) {
     }

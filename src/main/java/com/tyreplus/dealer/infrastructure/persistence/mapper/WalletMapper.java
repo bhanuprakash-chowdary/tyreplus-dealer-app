@@ -18,7 +18,7 @@ public class WalletMapper {
         return WalletJpaEntity.builder()
                 .id(wallet.getId())
                 .dealerId(wallet.getDealerId())
-                .balance(wallet.getBalance())
+                .credits(wallet.getCredits())
                 .version(wallet.getVersion())
                 .build();
     }
@@ -31,7 +31,7 @@ public class WalletMapper {
         return Wallet.builder()
                 .id(jpaEntity.getId())
                 .dealerId(jpaEntity.getDealerId())
-                .balance(jpaEntity.getBalance())
+                .credits(jpaEntity.getCredits())
                 .version(jpaEntity.getVersion())
                 .build();
     }

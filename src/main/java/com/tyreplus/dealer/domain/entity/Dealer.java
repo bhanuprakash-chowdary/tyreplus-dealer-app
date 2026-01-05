@@ -23,6 +23,7 @@ public class Dealer {
     private String businessName;
     private String ownerName;
     private boolean isVerified;
+    private String passwordHash;
     private ContactDetails contactDetails;
     private Address address;
     private BusinessHours businessHours;

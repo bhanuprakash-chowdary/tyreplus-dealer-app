@@ -18,11 +18,11 @@ import java.util.UUID;
 public class Wallet {
     private UUID id;
     private UUID dealerId;
-    private int balance;
+    private int credits;
     private Long version;
 
     public Wallet() {
-        this.balance = 0;
+        this.credits = 0;
     }
 
     public Wallet(UUID dealerId, int initialBalance) {
@@ -31,7 +31,7 @@ public class Wallet {
         if (initialBalance < 0) {
             throw new IllegalArgumentException("Initial balance cannot be negative");
         }
-        this.balance = initialBalance;
+        this.credits = initialBalance;
     }
 
     /**
@@ -44,39 +44,39 @@ public class Wallet {
         if (cost < 0) {
             throw new IllegalArgumentException("Cost cannot be negative");
         }
-        return this.balance >= cost;
+        return this.credits >= cost;
     }
 
     /**
      * Deducts an amount from the wallet balance.
      *
-     * @param amount the amount to deduct
+     * @param credits the amount to deduct
      * @throws IllegalArgumentException if amount is negative
      * @throws IllegalStateException if insufficient balance
      */
-    public void deduct(int amount) {
-        if (amount < 0) {
+    public void deduct(int credits) {
+        if (credits < 0) {
             throw new IllegalArgumentException("Deduction amount cannot be negative");
         }
-        if (!canAfford(amount)) {
+        if (!canAfford(credits)) {
             throw new IllegalStateException(
-                    String.format("Insufficient balance. Current: %d, Required: %d", balance, amount)
+                    String.format("Insufficient balance. Current: %d, Required: %d", credits, credits)
             );
         }
-        this.balance -= amount;
+        this.credits -= credits;
     }
 
     /**
      * Adds an amount to the wallet balance.
      *
-     * @param amount the amount to add
+     * @param credits the amount to add
      * @throws IllegalArgumentException if amount is negative
      */
-    public void credit(int amount) {
-        if (amount < 0) {
+    public void credit(int credits) {
+        if (credits < 0) {
             throw new IllegalArgumentException("Credit amount cannot be negative");
         }
-        this.balance += amount;
+        this.credits += credits;
     }
 }
 

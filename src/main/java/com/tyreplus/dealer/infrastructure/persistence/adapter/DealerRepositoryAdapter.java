@@ -50,6 +50,12 @@ public class DealerRepositoryAdapter implements DealerRepository {
     }
 
     @Override
+    public Optional<Dealer> findByPhoneNumberOrEmail(String identifier) {
+        return jpaRepository.findByPhoneNumberOrEmail(identifier,identifier)
+                .map(mapper::toDomainEntity);
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
     }

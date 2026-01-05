@@ -34,14 +34,14 @@ public class TransactionRepositoryAdapter implements TransactionRepository {
 
     @Override
     public List<Transaction> findByDealerId(UUID dealerId) {
-        return jpaRepository.findByDealerIdOrderByTimestampDesc(dealerId).stream()
+        return jpaRepository.findByDealerIdOrderByCreatedAtDesc(dealerId).stream()
                 .map(mapper::toDomainEntity)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Transaction> findByWalletId(UUID walletId) {
-        return jpaRepository.findByWalletIdOrderByTimestampDesc(walletId).stream()
+        return jpaRepository.findByWalletIdOrderByCreatedAtDesc(walletId).stream()
                 .map(mapper::toDomainEntity)
                 .collect(Collectors.toList());
     }

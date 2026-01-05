@@ -1,6 +1,5 @@
 package com.tyreplus.dealer.infrastructure.persistence.adapter;
 
-import com.tyreplus.dealer.application.dto.LeadDetailsResponse;
 import com.tyreplus.dealer.domain.entity.Lead;
 import com.tyreplus.dealer.domain.entity.LeadStatus;
 import com.tyreplus.dealer.domain.repository.LeadRepository;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -30,11 +28,11 @@ public class LeadRepositoryAdapter implements LeadRepository {
 
     private final LeadJpaRepository jpaRepository;
     private final LeadMapper mapper;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Lead> redisTemplate;
 
     private static final String CACHE_KEY_PREFIX = "LEAD_";
 
-    public LeadRepositoryAdapter(LeadJpaRepository jpaRepository, LeadMapper mapper,RedisTemplate<String, Object> redisTemplate) {
+    public LeadRepositoryAdapter(LeadJpaRepository jpaRepository, LeadMapper mapper,RedisTemplate<String, Lead> redisTemplate) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
         this.redisTemplate = redisTemplate;
@@ -56,17 +54,17 @@ public class LeadRepositoryAdapter implements LeadRepository {
         String key = CACHE_KEY_PREFIX + id.toString();
 
         // 1. Try to fetch from Redis Cache
-        Lead cachedLead = (Lead) redisTemplate.opsForValue().get(key);
-        if (cachedLead != null) {
-            return Optional.of(cachedLead);
+        Lead cached  = redisTemplate.opsForValue().get(key);
+        if (cached != null) {
+            return Optional.of(cached);
         }
 
         // 2. Cache Miss - Fetch from PostgreSQL
         return jpaRepository.findById(id).map(entity -> {
             Lead domainLead = mapper.toDomainEntity(entity);
 
-            // 3. Prime the Cache for 10 minutes
-            redisTemplate.opsForValue().set(key, domainLead, Duration.ofMinutes(10));
+            // 3. Prime the Cache for 5 minutes
+            redisTemplate.opsForValue().set(key, domainLead , Duration.ofMinutes(5));
             return domainLead;
         });
     }
@@ -94,6 +92,7 @@ public class LeadRepositoryAdapter implements LeadRepository {
     @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
+        redisTemplate.delete(CACHE_KEY_PREFIX + id);
     }
 
     @Override
@@ -133,6 +132,9 @@ public class LeadRepositoryAdapter implements LeadRepository {
                 .map(mapper::toJpaEntity)
                 .toList();
         jpaRepository.saveAll(entities);
+        leads.forEach(lead ->
+                redisTemplate.delete(CACHE_KEY_PREFIX + lead.getId())
+        );
     }
 
 
@@ -151,4 +153,6 @@ public class LeadRepositoryAdapter implements LeadRepository {
         return jpaRepository.findLeadsWithFilters(status,dealerId,sort,pageable).map(mapper::toDomainEntity);
     }
 }
+
+
 

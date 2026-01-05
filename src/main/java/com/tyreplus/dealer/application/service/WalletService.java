@@ -1,19 +1,19 @@
 package com.tyreplus.dealer.application.service;
 
 import com.tyreplus.dealer.application.dto.*;
+import com.tyreplus.dealer.domain.entity.RechargePackage;
 import com.tyreplus.dealer.domain.entity.Transaction;
 import com.tyreplus.dealer.domain.entity.TransactionType;
 import com.tyreplus.dealer.domain.entity.Wallet;
+import com.tyreplus.dealer.domain.repository.RechargePackageRepository;
 import com.tyreplus.dealer.domain.repository.TransactionRepository;
 import com.tyreplus.dealer.domain.repository.WalletRepository;
 import com.tyreplus.dealer.infrastructure.payment.RazorpayAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Application service for handling wallet operations.
@@ -24,11 +24,13 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final RazorpayAdapter razorpayAdapter;
+    private final RechargePackageRepository packageRepository;
 
-    public WalletService(WalletRepository walletRepository, TransactionRepository transactionRepository,RazorpayAdapter razorpayAdapter) {
+    public WalletService(WalletRepository walletRepository, TransactionRepository transactionRepository,RazorpayAdapter razorpayAdapter, RechargePackageRepository packageRepository) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.razorpayAdapter = razorpayAdapter;
+        this.packageRepository = packageRepository;
     }
 
     public WalletResponse getWalletDetails(UUID dealerId) {
@@ -40,37 +42,41 @@ public class WalletService {
         List<WalletResponse.TransactionResponse> transactionResponses = transactions.stream()
                 .map(tx -> new WalletResponse.TransactionResponse(
                         tx.getId().toString(),
-                        tx.getDescription() != null ? tx.getDescription() : 
+                        tx.getDescription() != null ? tx.getDescription() :
                                 (tx.getType() == TransactionType.CREDIT ? "Added Money" : "Deducted Money"),
                         tx.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME),
-                        tx.getAmount(),
+                        tx.getCredits(),
                         tx.getType().name().toLowerCase()
-                ))
-                .collect(Collectors.toList());
+                )).toList();
 
-        return new WalletResponse(wallet.getBalance(), transactionResponses);
+        return new WalletResponse(wallet.getCredits(), transactionResponses);
     }
 
+    @Transactional(readOnly = true)
     public List<PackageResponse> getPackages() {
-        // Hardcoded packages as requested
-        List<PackageResponse> packages = new ArrayList<>();
-        packages.add(new PackageResponse("pkg_1", "Starter", 500, 10, false));
-        packages.add(new PackageResponse("pkg_2", "Growth", 2000, 50, true));
-        packages.add(new PackageResponse("pkg_3", "Premium", 5000, 150, false));
-        return packages;
+        return packageRepository.findActivePackages().stream().
+                map(rechargePackage ->
+                        new PackageResponse(rechargePackage.getId().toString(),
+                                rechargePackage.getName(),
+                                rechargePackage.getPriceInInr(),
+                                rechargePackage.getCredits(),
+                                rechargePackage.isPopular()))
+                .toList();
     }
 
     /**
      * Step 1: Create a secure order with the Gateway
      */
     @Transactional
-    public PaymentOrderResponse initiateRecharge(UUID dealerId, int amountInInr) {
+    public PaymentOrderResponse initiateRecharge(UUID dealerId, UUID packageId) {
         try {
-            // Razorpay expects amount in Paise
-            int amountInPaise = amountInInr * 100;
-            String gatewayOrderId = razorpayAdapter.createGatewayOrder(amountInPaise);
 
-            return new PaymentOrderResponse(gatewayOrderId, amountInInr, "INR");
+            RechargePackage pkg = packageRepository.findById(packageId).
+                    orElseThrow(() -> new IllegalArgumentException("Package not found"));
+            // Razorpay expects amount in Paise
+            String gatewayOrderId = razorpayAdapter.createGatewayOrder(pkg.getPriceInInr() * 100);
+
+            return new PaymentOrderResponse(gatewayOrderId, pkg.getCredits(), "CREDITS",pkg.getName());
         } catch (Exception e) {
             throw new RuntimeException("Failed to initiate payment with gateway", e);
         }
@@ -96,8 +102,11 @@ public class WalletService {
         Wallet wallet = walletRepository.findByDealerIdWithLock(dealerId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
 
+        RechargePackage pkg = packageRepository.findById(UUID.fromString(request.packageId())).
+                orElseThrow(() -> new IllegalArgumentException("Invalid Package"));
+
         // 3. Update Balance
-        wallet.credit(request.amount());
+        wallet.credit(pkg.getCredits());
         walletRepository.save(wallet);
 
         // 4. Record Transaction
@@ -105,32 +114,31 @@ public class WalletService {
                 wallet.getId(),
                 dealerId,
                 TransactionType.CREDIT,
-                request.amount(),
-                "Wallet Recharge: Verified via Gateway"
+                pkg.getCredits(),
+                "Package Purchase: " + pkg.getName()
         );
         transactionRepository.save(transaction);
 
         return getWalletDetails(dealerId);
     }
 
+    /**
+     * TEST ONLY – directly credits wallet.
+     * Useful for QA / local / admin testing.
+     */
     @Transactional
-    public WalletResponse recharge(UUID dealerId, RechargeRequest request) {
+    public WalletResponse testRecharge(UUID dealerId, RechargeRequest request) {
         Wallet wallet = walletRepository.findByDealerIdWithLock(dealerId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found for dealer: " + dealerId));
 
-        int amount = request.amount();
-        
-        // If packageId is provided, use package credits, otherwise use direct amount
-        if (request.packageId() != null) {
-            PackageResponse pkg = getPackages().stream()
-                    .filter(p -> p.id().equals(request.packageId()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Package not found: " + request.packageId()));
-            amount = pkg.credits();
-        }
+        RechargePackage pkg = packageRepository.findById(UUID.fromString(request.packageId())).
+                orElseThrow(() -> new IllegalArgumentException("Package not found: " + request.packageId()));
+
+        int creditsToAdd = pkg.getCredits();
+        String description = "TEST Package Purchase: " + pkg.getName();
 
         // Credit the wallet
-        wallet.credit(amount);
+        wallet.credit(creditsToAdd);
         walletRepository.save(wallet);
 
         // Create transaction record
@@ -138,8 +146,8 @@ public class WalletService {
                 wallet.getId(),
                 dealerId,
                 TransactionType.CREDIT,
-                amount,
-                request.packageId() != null ? "Package Purchase" : "Wallet Recharge"
+                creditsToAdd,
+                description
         );
         transactionRepository.save(transaction);
 

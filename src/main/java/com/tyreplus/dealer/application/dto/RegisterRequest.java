@@ -1,10 +1,10 @@
 package com.tyreplus.dealer.application.dto;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
+
+import java.time.DayOfWeek;
+import java.util.List;
 
 /**
  * Request DTO for dealer registration.
@@ -59,7 +59,8 @@ public record RegisterRequest(
             @NotBlank(message = "Close time is required")
             String closeTime,
             @NotNull(message = "Open days are required")
-            java.util.List<String> openDays
+            @Size(min = 1, message = "At least one open day is required")
+            List<DayOfWeek> openDays
     ) {
     }
 }
