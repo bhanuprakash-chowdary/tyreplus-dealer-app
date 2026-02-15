@@ -1,37 +1,63 @@
-services:
-  app:
-    image: your-dockerhub-username/tyreplus-app:latest
-    ports:
-      - "80:8080" # Map public port 80 to internal 8080
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-      - DB_PASSWORD=${PROD_DB_PASSWORD}
-      - JWT_SECRET=${PROD_JWT_SECRET}
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - tyreplus-net
+version: '3.8'
 
+services:
   postgres:
-    image: postgres:16-alpine
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    image: postgres:16
+    container_name: tyreplus-postgres
+    # In real production, change these to something unique!
     environment:
-      - POSTGRES_PASSWORD=${PROD_DB_PASSWORD}
-      - POSTGRES_DB=tyreplus_dealer_db
+      POSTGRES_DB: tyreplus_dealer_db
+      POSTGRES_USER: ${DB_USER:-tyreplus_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tyreplus_password}
+    ports:
+      - "5432:5432" # Keep this ONLY if you need to connect from outside Docker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - tyreplus-net
+      - tyreplus-network
+    restart: always
 
   redis:
     image: redis:7-alpine
-    command: redis-server --save 60 1 --loglevel warning
+    container_name: tyreplus-redis
+    # No ports mapping needed if ONLY the app uses Redis (Security Best Practice)
     networks:
-      - tyreplus-net
+      - tyreplus-network
+    restart: always
+
+  app:
+    image: ravillabhanu/tyreplus-dealer-app:1.0.0
+    container_name: tyreplus-dealer-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Use 'prod' for production - disables DEBUG logs from your local file
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      DB_NAME: tyreplus_dealer_db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - tyreplus-network
+    restart: always
+
+volumes:
+  postgres_data:
 
 networks:
-  tyreplus-net:
-volumes:
-  pgdata:
+  tyreplus-network:
+    driver: bridge

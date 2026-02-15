@@ -19,6 +19,7 @@ services:
       retries: 5
     networks:
       - tyreplus-network
+
   redis:
     image: redis:7-alpine
     container_name: tyreplus-redis
@@ -28,22 +29,20 @@ services:
       - tyreplus-network
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ravillabhanu/tyreplus-dealer-app:1.0.0
     container_name: tyreplus-dealer-app
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=local
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
-      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      DB_NAME: tyreplus_dealer_db
+      DB_USER: tyreplus_user
+      DB_PASSWORD: tyreplus_password
+      JWT_SECRET: tyreplus-dealer-app-secret-key-for-jwt-token-generation-minimum-256-bits-required-for-hmac-sha256
+      RAZORPAY_KEY_ID: rzp_test_12345
+      RAZORPAY_KEY_SECRET: abcde_secret_key
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,9 +54,7 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
 
 networks:
   tyreplus-network:
     driver: bridge
-
