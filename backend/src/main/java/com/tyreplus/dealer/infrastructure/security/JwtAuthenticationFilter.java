@@ -53,8 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, // Passing the full object here
                             null,
-                            userDetails.getAuthorities()
-                    );
+                            userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                     // This is the magic line that makes @AuthenticationPrincipal work
@@ -62,7 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            logger.error("Authentication failed: {}");
+            logger.error("Authentication failed for URI: " + request.getRequestURI() + " | Header: "
+                    + request.getHeader("Authorization"));
+            logger.error("Exception details: ", e);
         }
 
         filterChain.doFilter(request, response);
