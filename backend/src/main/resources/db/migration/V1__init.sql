@@ -286,5 +286,11 @@ CREATE TABLE sell_requests (
     condition VARCHAR(50),
     quantity INTEGER,
     expected_price DOUBLE PRECISION,
-    image_urls TEXT
+    image_urls TEXT,
+    vehicle_type VARCHAR(50),
+    tyre_age VARCHAR(50),
+    km_driven INTEGER,
+    pickup_date VARCHAR(50),
+    pickup_time_slot VARCHAR(50),
+    mobile VARCHAR(20)
 );
