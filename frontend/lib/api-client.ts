@@ -33,8 +33,14 @@ export async function fetchWithMockFallback<T>(
         // Add Authorization token if available
         if (typeof window !== "undefined") {
             const token = localStorage.getItem("tyreplus_token")
-            if (token) {
+            // Ensure token is valid and not a string "undefined" or "null" or "mock_"
+            if (token && token !== "undefined" && token !== "null" && !token.startsWith("mock_")) {
                 (headers as any)["Authorization"] = `Bearer ${token}`
+            } else if (token && (token === "undefined" || token === "null" || token.startsWith("mock_"))) {
+                // Clean up invalid tokens
+                localStorage.removeItem("tyreplus_token")
+                localStorage.removeItem("tyreplus_refresh_token")
+                localStorage.removeItem("tyreplus_user")
             }
         }
 

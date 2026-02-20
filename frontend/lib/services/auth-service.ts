@@ -47,8 +47,7 @@ export const authService = {
             {
                 method: "POST",
                 body: JSON.stringify({ mobile, otp }),
-            },
-            { token: "mock_token_123", refreshToken: "mock_refresh_123", user: mockUser }
+            }
         )
     },
 
@@ -79,8 +78,7 @@ export const authService = {
             {
                 method: "POST",
                 body: JSON.stringify(data),
-            },
-            { token: "mock_reg_token", refreshToken: "mock_refresh_reg", user: mockUser }
+            }
         )
     },
 }
