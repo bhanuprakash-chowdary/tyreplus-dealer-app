@@ -20,14 +20,6 @@ services:
     networks:
       - tyreplus-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: tyreplus-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - tyreplus-network
-
   app:
     image: ravillabhanu/tyreplus-dealer-app:1.0.0
     container_name: tyreplus-dealer-app
@@ -36,7 +28,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
-      REDIS_HOST: redis
       DB_NAME: tyreplus_dealer_db
       DB_USER: tyreplus_user
       DB_PASSWORD: tyreplus_password
@@ -46,8 +37,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
     networks:
       - tyreplus-network
     restart: unless-stopped

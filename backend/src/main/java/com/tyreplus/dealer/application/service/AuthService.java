@@ -8,7 +8,9 @@ import com.tyreplus.dealer.application.exception.UserNotFoundException;
 import com.tyreplus.dealer.domain.entity.Dealer;
 import com.tyreplus.dealer.domain.entity.Wallet;
 import com.tyreplus.dealer.domain.repository.DealerRepository;
+import com.tyreplus.dealer.domain.repository.CustomerRepository;
 import com.tyreplus.dealer.domain.repository.WalletRepository;
+import com.tyreplus.dealer.domain.entity.Customer;
 import com.tyreplus.dealer.domain.valueobject.Address;
 import com.tyreplus.dealer.domain.valueobject.BusinessHours;
 import com.tyreplus.dealer.domain.valueobject.ContactDetails;
@@ -31,20 +33,23 @@ import java.util.UUID;
 public class AuthService {
 
     private final DealerRepository dealerRepository;
+    private final CustomerRepository customerRepository;
     private final WalletRepository walletRepository;
     private final OtpService otpService;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
 
-    // Constructor updated to include WalletRepository
+    // Constructor updated to include WalletRepository and CustomerRepository
     public AuthService(DealerRepository dealerRepository,
+            CustomerRepository customerRepository,
             WalletRepository walletRepository,
             OtpService otpService,
             JwtUtil jwtUtil,
             RefreshTokenService refreshTokenService,
             PasswordEncoder passwordEncoder) {
         this.dealerRepository = dealerRepository;
+        this.customerRepository = customerRepository;
         this.walletRepository = walletRepository;
         this.otpService = otpService;
         this.jwtUtil = jwtUtil;
@@ -245,6 +250,53 @@ public class AuthService {
         walletRepository.save(wallet);
 
         return savedDealer;
+    }
+
+    /**
+     * Customer OTP Login (Auto-register if not exists).
+     */
+    @Transactional
+    public LoginResponse verifyCustomerOtp(VerifyOtpRequest request) {
+        // 1. Validate OTP
+        otpService.validateOtp(request.mobile(), request.otp());
+
+        // 2. Find or Create Customer
+        Customer customer = customerRepository.findByMobile(request.mobile())
+                .orElseGet(() -> createGuestCustomer(request.mobile()));
+
+        // 3. Issue Tokens
+        return issueCustomerTokens(customer);
+    }
+
+    private Customer createGuestCustomer(String mobile) {
+        Customer customer = Customer.builder()
+                .mobile(mobile)
+                .name("Guest")
+                .build();
+
+        return customerRepository.save(customer);
+    }
+
+    private LoginResponse issueCustomerTokens(Customer customer) {
+
+        String accessToken = jwtUtil.generateToken(
+                customer.getMobile(),
+                customer.getId().toString(),
+                "customer"); // ROLE is customer
+
+        // Depending on whether we want long-term sessions for customers
+        // For MVP, using a dummy UUID for refresh token as they log in via OTP each
+        // time
+        String refreshToken = UUID.randomUUID().toString();
+
+        return new LoginResponse(
+                accessToken,
+                refreshToken,
+                new LoginResponse.UserInfo(
+                        customer.getId().toString(),
+                        customer.getName(),
+                        "customer",
+                        null));
     }
 
     private LocalTime parseTime(String timeStr) {

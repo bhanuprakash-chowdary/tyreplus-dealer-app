@@ -5,9 +5,12 @@ package com.tyreplus.dealer.domain.entity;
  */
 public enum LeadStatus {
     NEW,
-    BOUGHT,
-    EXPIRED,
-    CANCELLED,
-    CONVERTED
+    VERIFIED,
+    FOLLOW_UP,
+    CONVERTED,
+    REJECTED,
+    DUPLICATE,
+    OFFER_RECEIVED,
+    DEALER_SELECTED,
+    CLOSED
 }
-

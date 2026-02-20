@@ -20,20 +20,37 @@ import java.util.UUID;
  */
 public interface LeadRepository {
     Lead save(Lead lead);
+
     Optional<Lead> findById(UUID id);
+
     List<Lead> findAll();
+
+    List<Lead> findByCustomerId(UUID customerId);
+
     List<Lead> findByStatus(String status);
+
     boolean existsById(UUID id);
+
     void deleteById(UUID id);
-    long countByPurchasedByDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay);
-    List<Lead> findRecentPurchases(UUID dealerId, int limit);
-    long countByPurchasedByDealerId(UUID dealerId);
-    long countByPurchasedByDealerIdAndStatus(UUID dealerId, LeadStatus status);
+
+    long countBySelectedDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay);
+
+    List<Lead> findRecentSelections(UUID dealerId, int limit);
+
+    long countBySelectedDealerId(UUID dealerId);
+
+    long countBySelectedDealerIdAndStatus(UUID dealerId, LeadStatus status);
+
     Optional<Lead> findByIdWithLock(UUID id);
+
     // Add these methods to support the Seeder
     void saveAll(List<Lead> leads);
-    long count();
-    void flush();
-    Page<Lead> findLeadsWithFilters(LeadStatus status, UUID dealerId, String sort, Pageable pageable);
-}
 
+    long count();
+
+    void flush();
+
+    Page<Lead> findLeadsWithFilters(LeadStatus status, UUID dealerId, String sort, Pageable pageable);
+
+    Page<Lead> findLeadsBySelectedDealer(UUID dealerId, Pageable pageable);
+}

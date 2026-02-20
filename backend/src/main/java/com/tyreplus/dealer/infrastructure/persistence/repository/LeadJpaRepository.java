@@ -23,15 +23,17 @@ import java.util.UUID;
 public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID>, JpaSpecificationExecutor<LeadJpaEntity> {
         List<LeadJpaEntity> findByStatus(LeadStatus status);
 
+        List<LeadJpaEntity> findByCustomerId(UUID customerId);
+
         // This method counts leads for a specific dealer created after a certain time
-        long countByPurchasedByDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay);
+        long countBySelectedDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay);
 
         // Spring Data needs Pageable to handle "Top 10" or "Limit"
-        List<LeadJpaEntity> findByPurchasedByDealerId(UUID dealerId, Pageable pageable);
+        List<LeadJpaEntity> findBySelectedDealerId(UUID dealerId, Pageable pageable);
 
-        long countByPurchasedByDealerId(UUID dealerId);
+        long countBySelectedDealerId(UUID dealerId);
 
-        long countByPurchasedByDealerIdAndStatus(UUID dealerId, LeadStatus status);
+        long countBySelectedDealerIdAndStatus(UUID dealerId, LeadStatus status);
 
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT l FROM LeadJpaEntity l WHERE l.id = :id")
@@ -39,8 +41,8 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID>, J
 
         @Query("SELECT l FROM LeadJpaEntity l " +
                         "WHERE (:status IS NULL OR l.status = :status) " +
-                        "AND (:dealerId NOT MEMBER OF l.skippedByDealerIds) " +
-                        "AND (l.purchasedByDealerId IS NULL) " +
+                        // "AND (:dealerId NOT MEMBER OF l.skippedByDealerIds) " +
+                        "AND (l.selectedDealerId IS NULL) " +
                         "ORDER BY " +
                         "CASE WHEN :sort = 'date_asc' THEN l.createdAt END ASC, " +
                         "CASE WHEN :sort = 'date_desc' THEN l.createdAt END DESC")
@@ -49,4 +51,7 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID>, J
                         @Param("dealerId") UUID dealerId,
                         @Param("sort") String sort,
                         Pageable pageable);
+
+        // Returns a paginated list of leads won by a particular dealer
+        Page<LeadJpaEntity> findLeadsBySelectedDealerId(UUID dealerId, Pageable pageable);
 }

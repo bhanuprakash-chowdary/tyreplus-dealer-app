@@ -3,18 +3,20 @@ CREATE TYPE vehicle_category AS ENUM ('TWO_WHEELER', 'THREE_WHEELER', 'FOUR_WHEE
 CREATE TYPE otp_category AS ENUM ('REGISTRATION', 'LOGIN', 'PASSWORD_RESET');
 CREATE TYPE request_category AS ENUM ('SELL', 'BUY');
 CREATE TYPE request_status AS ENUM ('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
-CREATE TYPE lead_status AS ENUM ('NEW', 'AVAILABLE', 'SOLD', 'DISCARDED');
+
 
 CREATE CAST (varchar AS vehicle_category) WITH INOUT AS IMPLICIT;
 CREATE CAST (varchar AS otp_category) WITH INOUT AS IMPLICIT;
 CREATE CAST (varchar AS request_category) WITH INOUT AS IMPLICIT;
 CREATE CAST (varchar AS request_status) WITH INOUT AS IMPLICIT;
+CREATE TYPE lead_status AS ENUM ('NEW', 'VERIFIED', 'OFFER_RECEIVED', 'DEALER_SELECTED', 'CLOSED');
+
 CREATE CAST (varchar AS lead_status) WITH INOUT AS IMPLICIT;
 
--- Users Table
+-- Users Table (Customers)
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    id UUID PRIMARY KEY,
+    name VARCHAR(100),
     mobile VARCHAR(15) NOT NULL UNIQUE,
     email VARCHAR(100),
     password VARCHAR(255),
@@ -28,6 +30,15 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Serviceable Locations
+CREATE TABLE serviceable_locations (
+    id UUID PRIMARY KEY,
+    pincode VARCHAR(20) NOT NULL,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 -- Unified OTPs Table
 CREATE TABLE otps (
     id UUID PRIMARY KEY,
@@ -38,68 +49,6 @@ CREATE TABLE otps (
     expires_at TIMESTAMP NOT NULL,
     used BOOLEAN NOT NULL DEFAULT FALSE,
     attempts INTEGER NOT NULL DEFAULT 0
-);
-
--- Serviceable Locations
-CREATE TABLE serviceable_locations (
-    id UUID PRIMARY KEY,
-    pincode VARCHAR(10) UNIQUE NOT NULL,
-    city VARCHAR(100),
-    state VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE
-);
-
--- Vehicle Makes
-CREATE TABLE vehicle_makes (
-    id BIGSERIAL PRIMARY KEY,
-    vehicle_type vehicle_category NOT NULL,
-    make_name VARCHAR(100) NOT NULL,
-    image_url VARCHAR(500),
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT unique_type_make UNIQUE (vehicle_type, make_name)
-);
-
--- Vehicle Models
-CREATE TABLE vehicle_models (
-    id BIGSERIAL PRIMARY KEY,
-    make_id BIGINT NOT NULL REFERENCES vehicle_makes(id) ON DELETE CASCADE,
-    model_name VARCHAR(100) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE
-);
-
--- Vehicle Variants
-CREATE TABLE vehicle_variants (
-    id BIGSERIAL PRIMARY KEY,
-    model_id BIGINT NOT NULL REFERENCES vehicle_models(id) ON DELETE CASCADE,
-    variant_name VARCHAR(100) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE
-);
-
--- Tyre Requests
-CREATE TABLE tyre_requests (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    request_id VARCHAR(50) NOT NULL UNIQUE,
-    request_type request_category NOT NULL DEFAULT 'SELL',
-    vehicle_type vehicle_category NOT NULL,
-    tyre_positions VARCHAR(500),
-    tyre_make VARCHAR(100),
-    tyre_size VARCHAR(50),
-    quantity INT DEFAULT 1,
-    tyre_age VARCHAR(50),
-    km_driven VARCHAR(50),
-    expected_price VARCHAR(50),
-    budget DECIMAL(10,2),
-    preferred_brands VARCHAR(500),
-    pickup_date DATE,
-    delivery_date DATE,
-    mobile VARCHAR(15) NOT NULL,
-    address_line1 VARCHAR(200),
-    city VARCHAR(100),
-    pincode VARCHAR(10),
-    status request_status NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Dealers Table
@@ -129,19 +78,37 @@ CREATE TABLE dealer_open_days (
     PRIMARY KEY (dealer_id, open_day)
 );
 
--- Leads Table
+-- Leads Table (Tyre Requirements)
 CREATE TABLE leads (
     id UUID PRIMARY KEY,
-    customer_name VARCHAR(255) NOT NULL,
-    customer_phone VARCHAR(255) NOT NULL,
-    customer_email VARCHAR(255),
+    customer_id UUID REFERENCES users(id),
+    customer_mobile VARCHAR(255) NOT NULL,
+    vehicle_type VARCHAR(50) NOT NULL,
+    tyre_type VARCHAR(50) NOT NULL,
+    tyre_brand VARCHAR(100),
     vehicle_model VARCHAR(255) NOT NULL,
-    vehicle_year VARCHAR(255),
+    location_area VARCHAR(255),
+    location_pincode VARCHAR(20),
     status lead_status NOT NULL DEFAULT 'NEW',
-    lead_cost INTEGER NOT NULL,
-    purchased_by_dealer_id UUID REFERENCES dealers(id),
+    selected_dealer_id UUID REFERENCES dealers(id),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    purchased_at TIMESTAMP
+    verified_at TIMESTAMP
+);
+
+-- Offers Table
+CREATE TABLE offers (
+    id UUID PRIMARY KEY,
+    lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+    dealer_id UUID NOT NULL REFERENCES dealers(id) ON DELETE CASCADE,
+    price INTEGER NOT NULL,
+    tyre_condition VARCHAR(100) NOT NULL,
+    stock_available BOOLEAN NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE offer_images (
+    offer_id UUID NOT NULL REFERENCES offers(id) ON DELETE CASCADE,
+    image_url VARCHAR(500) NOT NULL
 );
 
 CREATE TABLE lead_skips (

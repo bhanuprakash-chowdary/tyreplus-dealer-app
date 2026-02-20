@@ -9,13 +9,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * JPA Entity for Lead.
- * Maps domain entity to database table.
+ * JPA Entity for Tyre Requirement (Lead).
  */
 @Entity
 @Table(name = "leads")
@@ -30,40 +27,40 @@ public class LeadJpaEntity {
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "UUID")
     private UUID id;
 
-    @Column(name = "customer_name", nullable = false)
-    private String customerName;
+    @Column(name = "customer_id", columnDefinition = "UUID")
+    private UUID customerId;
 
-    @Column(name = "customer_phone", nullable = false)
-    private String customerPhone;
+    @Column(name = "customer_mobile")
+    private String customerMobile;
 
-    @Column(name = "customer_email")
-    private String customerEmail;
+    @Column(name = "vehicle_type")
+    private String vehicleType;
 
-    @Column(name = "vehicle_model", nullable = false)
+    @Column(name = "tyre_type")
+    private String tyreType;
+
+    @Column(name = "tyre_brand")
+    private String tyreBrand;
+
+    @Column(name = "vehicle_model")
     private String vehicleModel;
 
-    @Column(name = "vehicle_year")
-    private String vehicleYear;
+    @Column(name = "location_area")
+    private String locationArea;
+
+    @Column(name = "location_pincode")
+    private String locationPincode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private LeadStatus status;
 
-    @Column(name = "lead_cost", nullable = false)
-    private int leadCost;
-
-    @Column(name = "purchased_by_dealer_id", columnDefinition = "UUID")
-    private UUID purchasedByDealerId;
+    @Column(name = "selected_dealer_id", columnDefinition = "UUID")
+    private UUID selectedDealerId;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "purchased_at")
-    private LocalDateTime purchasedAt;
-
-    @ElementCollection
-    @CollectionTable(name = "lead_skips", joinColumns = @JoinColumn(name = "lead_id"))
-    @Column(name = "dealer_id")
-    private Set<UUID> skippedByDealerIds = new HashSet<>();
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
 }
-

@@ -10,17 +10,19 @@ import java.util.UUID;
  * Java 21 Record following DDD principles.
  */
 public record LeadDetailsResponse(
-        UUID id,
-        String customerName,
-        String customerPhone,
-        String customerEmail,
-        String vehicleModel,
-        String vehicleYear,
-        LeadStatus status,
-        int leadCost,
-        UUID purchasedByDealerId,
-        LocalDateTime createdAt,
-        LocalDateTime purchasedAt
-) {
-}
+                UUID id,
+                String vehicleType,
+                String tyreType,
+                String tyreBrand,
+                String vehicleModel,
+                String locationArea,
+                String locationPincode,
+                LeadStatus status,
 
+                // Only visible to the dealer IF they are the selectedDealerId
+                String customerMobile,
+
+                UUID selectedDealerId,
+                LocalDateTime createdAt,
+                LocalDateTime verifiedAt) {
+}

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Adapter implementing DealerRepository using JPA.
@@ -51,8 +52,15 @@ public class DealerRepositoryAdapter implements DealerRepository {
 
     @Override
     public Optional<Dealer> findByPhoneNumberOrEmail(String identifier) {
-        return jpaRepository.findByPhoneNumberOrEmail(identifier,identifier)
+        return jpaRepository.findByPhoneNumberOrEmail(identifier, identifier)
                 .map(mapper::toDomainEntity);
+    }
+
+    @Override
+    public List<Dealer> findByIsVerifiedFalse() {
+        return jpaRepository.findByIsVerifiedFalse().stream()
+                .map(mapper::toDomainEntity)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -75,4 +83,3 @@ public class DealerRepositoryAdapter implements DealerRepository {
         jpaRepository.deleteById(id);
     }
 }
-

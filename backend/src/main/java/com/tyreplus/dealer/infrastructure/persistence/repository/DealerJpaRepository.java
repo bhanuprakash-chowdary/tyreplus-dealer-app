@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Spring Data JPA repository for DealerJpaEntity.
@@ -13,9 +14,14 @@ import java.util.UUID;
 @Repository
 public interface DealerJpaRepository extends JpaRepository<DealerJpaEntity, UUID> {
     Optional<DealerJpaEntity> findByPhoneNumber(String phoneNumber);
+
     Optional<DealerJpaEntity> findByEmail(String email);
-    Optional<DealerJpaEntity> findByPhoneNumberOrEmail(String phoneNumber,String email);
+
+    Optional<DealerJpaEntity> findByPhoneNumberOrEmail(String phoneNumber, String email);
+
+    List<DealerJpaEntity> findByIsVerifiedFalse();
+
     boolean existsByPhoneNumber(String phoneNumber);
+
     boolean existsByEmail(String email);
 }
-

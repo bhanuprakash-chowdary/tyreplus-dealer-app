@@ -17,16 +17,18 @@ public class LeadMapper {
 
         return LeadJpaEntity.builder()
                 .id(lead.getId())
-                .customerName(lead.getCustomerName())
-                .customerPhone(lead.getCustomerPhone())
-                .customerEmail(lead.getCustomerEmail())
+                .customerId(lead.getCustomerId())
+                .customerMobile(lead.getCustomerMobile())
+                .vehicleType(lead.getVehicleType())
+                .tyreType(lead.getTyreType())
+                .tyreBrand(lead.getTyreBrand())
                 .vehicleModel(lead.getVehicleModel())
-                .vehicleYear(lead.getVehicleYear())
+                .locationArea(lead.getLocationArea())
+                .locationPincode(lead.getLocationPincode())
                 .status(lead.getStatus())
-                .leadCost(lead.getLeadCost())
-                .purchasedByDealerId(lead.getPurchasedByDealerId())
+                .selectedDealerId(lead.getSelectedDealerId())
                 .createdAt(lead.getCreatedAt())
-                .purchasedAt(lead.getPurchasedAt())
+                .verifiedAt(lead.getVerifiedAt())
                 .build();
     }
 
@@ -37,17 +39,18 @@ public class LeadMapper {
 
         return Lead.builder()
                 .id(jpaEntity.getId())
-                .customerName(jpaEntity.getCustomerName())
-                .customerPhone(jpaEntity.getCustomerPhone())
-                .customerEmail(jpaEntity.getCustomerEmail())
+                .customerId(jpaEntity.getCustomerId())
+                .customerMobile(jpaEntity.getCustomerMobile())
+                .vehicleType(jpaEntity.getVehicleType())
+                .tyreType(jpaEntity.getTyreType())
+                .tyreBrand(jpaEntity.getTyreBrand())
                 .vehicleModel(jpaEntity.getVehicleModel())
-                .vehicleYear(jpaEntity.getVehicleYear())
+                .locationArea(jpaEntity.getLocationArea())
+                .locationPincode(jpaEntity.getLocationPincode())
                 .status(jpaEntity.getStatus())
-                .leadCost(jpaEntity.getLeadCost())
-                .purchasedByDealerId(jpaEntity.getPurchasedByDealerId())
+                .selectedDealerId(jpaEntity.getSelectedDealerId())
                 .createdAt(jpaEntity.getCreatedAt())
-                .purchasedAt(jpaEntity.getPurchasedAt())
+                .verifiedAt(jpaEntity.getVerifiedAt())
                 .build();
     }
 }
-

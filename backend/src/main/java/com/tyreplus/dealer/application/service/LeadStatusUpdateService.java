@@ -20,13 +20,14 @@ public class LeadStatusUpdateService {
                 .orElseThrow(() -> new IllegalArgumentException("Lead not found"));
 
         // Security: Prevent Dealer A from updating Dealer B's leads
-        if (!dealerId.equals(lead.getPurchasedByDealerId())) {
+        if (!dealerId.equals(lead.getSelectedDealerId())) {
             throw new IllegalStateException("Unauthorized: This lead belongs to another dealer.");
         }
 
-        // Logic: Once a lead is CONVERTED, you probably shouldn't allow changing it back to NEW
-        if (lead.getStatus() == LeadStatus.CONVERTED && newStatus != LeadStatus.CONVERTED) {
-            throw new IllegalStateException("Converted leads are finalized.");
+        // Logic: Once a lead is CLOSED, you probably shouldn't allow changing it back
+        // to NEW
+        if (lead.getStatus() == LeadStatus.CLOSED && newStatus != LeadStatus.CLOSED) {
+            throw new IllegalStateException("Closed leads are finalized.");
         }
 
         lead.setStatus(newStatus);

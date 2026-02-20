@@ -1,5 +1,6 @@
 package com.tyreplus.dealer.infrastructure.security;
 
+import com.tyreplus.dealer.domain.repository.CustomerRepository;
 import com.tyreplus.dealer.domain.repository.DealerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,11 +13,22 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final DealerRepository dealerRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String mobile) throws UsernameNotFoundException {
-        return dealerRepository.findByMobile(mobile)
-                .map(DealerDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("Dealer not found with mobile: " + mobile));
+        // Try dealer first
+        var dealerOpt = dealerRepository.findByMobile(mobile);
+        if (dealerOpt.isPresent()) {
+            return new DealerDetails(dealerOpt.get());
+        }
+
+        // Try customer next
+        var customerOpt = customerRepository.findByMobile(mobile);
+        if (customerOpt.isPresent()) {
+            return new CustomerDetails(customerOpt.get());
+        }
+
+        throw new UsernameNotFoundException("User not found with mobile: " + mobile);
     }
 }

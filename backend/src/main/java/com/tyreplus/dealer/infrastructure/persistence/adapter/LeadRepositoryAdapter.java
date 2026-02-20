@@ -9,11 +9,6 @@ import com.tyreplus.dealer.infrastructure.persistence.repository.LeadJpaReposito
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-/*
-import org.springframework.data.redis.core.RedisTemplate;
-import java.time.Duration;
-*/
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,53 +24,34 @@ public class LeadRepositoryAdapter implements LeadRepository {
 
     private final LeadJpaRepository jpaRepository;
     private final LeadMapper mapper;
-    // private final RedisTemplate<String, Lead> redisTemplate;
 
-    private static final String CACHE_KEY_PREFIX = "LEAD_";
-
-    public LeadRepositoryAdapter(LeadJpaRepository jpaRepository, LeadMapper mapper // ,
-    /* RedisTemplate<String, Lead> redisTemplate */) {
+    public LeadRepositoryAdapter(LeadJpaRepository jpaRepository, LeadMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
-        // this.redisTemplate = redisTemplate;
     }
 
     @Override
     public Lead save(Lead lead) {
         LeadJpaEntity jpaEntity = mapper.toJpaEntity(lead);
         LeadJpaEntity saved = jpaRepository.save(jpaEntity);
-        Lead savedLead = mapper.toDomainEntity(saved);
-        // 4. Cache Invalidation: Remove old data so next read gets fresh DB values
-        // redisTemplate.delete(CACHE_KEY_PREFIX + savedLead.getId());
-        return savedLead;
+        return mapper.toDomainEntity(saved);
     }
 
     @Override
     public Optional<Lead> findById(UUID id) {
-
-        String key = CACHE_KEY_PREFIX + id.toString();
-
-        // 1. Try to fetch from Redis Cache
-        /*
-         * Lead cached = redisTemplate.opsForValue().get(key);
-         * if (cached != null) {
-         * return Optional.of(cached);
-         * }
-         */
-
-        // 2. Cache Miss - Fetch from PostgreSQL
-        return jpaRepository.findById(id).map(entity -> {
-            Lead domainLead = mapper.toDomainEntity(entity);
-
-            // 3. Prime the Cache for 5 minutes
-            // redisTemplate.opsForValue().set(key, domainLead , Duration.ofMinutes(5));
-            return domainLead;
-        });
+        return jpaRepository.findById(id).map(mapper::toDomainEntity);
     }
 
     @Override
     public List<Lead> findAll() {
         return jpaRepository.findAll().stream()
+                .map(mapper::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Lead> findByCustomerId(UUID customerId) {
+        return jpaRepository.findByCustomerId(customerId).stream()
                 .map(mapper::toDomainEntity)
                 .collect(Collectors.toList());
     }
@@ -96,32 +72,31 @@ public class LeadRepositoryAdapter implements LeadRepository {
     @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
-        // redisTemplate.delete(CACHE_KEY_PREFIX + id);
     }
 
     @Override
-    public long countByPurchasedByDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay) {
-        return jpaRepository.countByPurchasedByDealerIdAndCreatedAtAfter(dealerId, startOfDay);
+    public long countBySelectedDealerIdAndCreatedAtAfter(UUID dealerId, LocalDateTime startOfDay) {
+        return jpaRepository.countBySelectedDealerIdAndCreatedAtAfter(dealerId, startOfDay);
     }
 
     @Override
-    public List<Lead> findRecentPurchases(UUID dealerId, int limit) {
+    public List<Lead> findRecentSelections(UUID dealerId, int limit) {
         // Uses PageRequest to handle the LIMIT at the SQL level
-        Pageable pageable = PageRequest.of(0, limit, Sort.by("createdAt").descending());
-        return jpaRepository.findByPurchasedByDealerId(dealerId, pageable)
+        Pageable pageable = PageRequest.of(0, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+        return jpaRepository.findBySelectedDealerId(dealerId, pageable)
                 .stream()
                 .map(mapper::toDomainEntity)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public long countByPurchasedByDealerId(UUID dealerId) {
-        return jpaRepository.countByPurchasedByDealerId(dealerId);
+    public long countBySelectedDealerId(UUID dealerId) {
+        return jpaRepository.countBySelectedDealerId(dealerId);
     }
 
     @Override
-    public long countByPurchasedByDealerIdAndStatus(UUID dealerId, LeadStatus status) {
-        return jpaRepository.countByPurchasedByDealerIdAndStatus(dealerId, status);
+    public long countBySelectedDealerIdAndStatus(UUID dealerId, LeadStatus status) {
+        return jpaRepository.countBySelectedDealerIdAndStatus(dealerId, status);
     }
 
     @Override
@@ -136,11 +111,6 @@ public class LeadRepositoryAdapter implements LeadRepository {
                 .map(mapper::toJpaEntity)
                 .toList();
         jpaRepository.saveAll(entities);
-        /*
-         * leads.forEach(lead ->
-         * redisTemplate.delete(CACHE_KEY_PREFIX + lead.getId())
-         * );
-         */
     }
 
     @Override
@@ -156,5 +126,10 @@ public class LeadRepositoryAdapter implements LeadRepository {
     @Override
     public Page<Lead> findLeadsWithFilters(LeadStatus status, UUID dealerId, String sort, Pageable pageable) {
         return jpaRepository.findLeadsWithFilters(status, dealerId, sort, pageable).map(mapper::toDomainEntity);
+    }
+
+    @Override
+    public Page<Lead> findLeadsBySelectedDealer(UUID dealerId, Pageable pageable) {
+        return jpaRepository.findLeadsBySelectedDealerId(dealerId, pageable).map(mapper::toDomainEntity);
     }
 }

@@ -1,51 +1,7 @@
 package com.tyreplus.dealer.infrastructure.config;
 
-/*
-import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
-import io.github.bucket4j.distributed.proxy.ProxyManager;
-import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.StringCodec;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-*/
 import org.springframework.context.annotation.Configuration;
 
-import java.time.Duration;
-
-/*
-@Configuration
-public class RateLimiterConfig {
-
-    @Bean
-    public RedisClient redisClient(
-            @Value("${spring.data.redis.host}") String redisHost,
-            @Value("${spring.data.redis.port}") int redisPort
-    ) {
-        return RedisClient.create(
-                RedisURI.builder()
-                        .withHost(redisHost)
-                        .withPort(redisPort)
-                        .build()
-        );
-    }
-
-    @Bean
-    public ProxyManager<String> proxyManager(RedisClient redisClient) {
-        // Connects Bucket4j to Redis using the Lettuce driver
-        StatefulRedisConnection<String, byte[]> connection = redisClient
-                .connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
-
-        return LettuceBasedProxyManager.builderFor(connection)
-                .withExpirationStrategy(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofMinutes(5)))
-                .build();
-    }
-}
-*/
 @Configuration
 public class RateLimiterConfig {
 }

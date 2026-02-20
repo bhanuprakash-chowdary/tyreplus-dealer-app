@@ -35,30 +35,25 @@ public class LeadPurchaseService {
     }
 
     /**
-     * Purchases a lead for a dealer.
+     * Deducts wallet balance when a customer selects this dealer's offer.
      * This operation is atomic and transactional.
-     *
-     * @param leadId   the ID of the lead to purchase
-     * @param dealerId the ID of the dealer purchasing the lead
-     * @return LeadDetailsResponse containing the purchased lead details
-     * @throws InsufficientFundsException if the dealer's wallet has insufficient
-     *                                    balance
-     * @throws IllegalArgumentException   if the lead is not available for purchase
      */
     @Transactional
-    public LeadDetailsResponse buyLead(UUID leadId, UUID dealerId) {
+    public LeadDetailsResponse processCustomerSelection(UUID leadId, UUID dealerId, int leadCost) {
         // 1. Lock Lead (Prevents race conditions)
         Lead lead = leadRepository.findByIdWithLock(leadId)
                 .orElseThrow(() -> new IllegalArgumentException("Lead not found"));
 
         // 2. Idempotency Check
-        if (dealerId.equals(lead.getPurchasedByDealerId())) {
-            return mapToResponse(lead);
+        if (dealerId.equals(lead.getSelectedDealerId())) {
+            return mapToResponse(lead, dealerId);
         }
 
-        // 3. Availability Check
-        if (!lead.isAvailable()) {
-            throw new IllegalStateException("Lead already purchased by another dealer.");
+        // 3. Availability Check (must be OFFER_RECEIVED status, not already
+        // DEALER_SELECTED)
+        if (lead.getStatus() == com.tyreplus.dealer.domain.entity.LeadStatus.DEALER_SELECTED
+                || lead.getStatus() == com.tyreplus.dealer.domain.entity.LeadStatus.CLOSED) {
+            throw new IllegalStateException("Lead has already been awarded to a dealer.");
         }
 
         // 4. Lock Wallet
@@ -66,47 +61,51 @@ public class LeadPurchaseService {
                 .orElseThrow(() -> new IllegalArgumentException("Wallet not found"));
 
         // 5. Execute Logic (Uses the new Bonus-first deduction)
-        Wallet.DeductionBreakdown breakdown = wallet.deduct(lead.getLeadCost());
-        lead.markAsBought(dealerId);
+        Wallet.DeductionBreakdown breakdown = wallet.deduct(leadCost); // In OTB, Cost might be dynamic or fixed
+
+        // Update Lead State
+        lead.selectDealer(dealerId);
 
         // 6. Persistence
         walletRepository.save(wallet);
         leadRepository.save(lead);
 
         // 7. Detailed Transaction Recording
-        recordDetailedTransaction(wallet, dealerId, lead, breakdown);
+        recordDetailedTransaction(wallet, dealerId, lead, leadCost, breakdown);
 
-        return mapToResponse(lead);
+        return mapToResponse(lead, dealerId);
     }
 
-    private void recordDetailedTransaction(Wallet wallet, UUID dealerId, Lead lead,
+    private void recordDetailedTransaction(Wallet wallet, UUID dealerId, Lead lead, int leadCost,
             Wallet.DeductionBreakdown breakdown) {
         // Create transaction record
         Transaction transaction = new Transaction(
                 wallet.getId(),
                 dealerId,
                 TransactionType.DEBIT,
-                lead.getLeadCost(),
+                leadCost,
                 breakdown.purchased(),
                 breakdown.bonus(),
-                "Lead Purchase: " + lead.getCustomerName() + " - " + lead.getVehicleModel(),
+                "Lead Won: " + lead.getVehicleModel(), // Hide customer name in transaction history if anonymous
                 null); // paymentId is null for internal debits
         transactionRepository.save(transaction);
     }
 
-    private LeadDetailsResponse mapToResponse(Lead lead) {
-        // Return response DTO
+    private LeadDetailsResponse mapToResponse(Lead lead, UUID currentDealerId) {
+        boolean isOwner = lead.getSelectedDealerId() != null && lead.getSelectedDealerId().equals(currentDealerId);
+
         return new LeadDetailsResponse(
                 lead.getId(),
-                lead.getCustomerName(),
-                lead.getCustomerPhone(),
-                lead.getCustomerEmail(),
+                lead.getVehicleType(),
+                lead.getTyreType(),
+                lead.getTyreBrand(),
                 lead.getVehicleModel(),
-                lead.getVehicleYear(),
+                lead.getLocationArea(),
+                lead.getLocationPincode(),
                 lead.getStatus(),
-                lead.getLeadCost(),
-                lead.getPurchasedByDealerId(),
+                isOwner ? lead.getCustomerMobile() : null, // reveal only if owner
+                lead.getSelectedDealerId(),
                 lead.getCreatedAt(),
-                lead.getPurchasedAt());
+                lead.getVerifiedAt());
     }
 }

@@ -6,13 +6,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * Domain Entity representing a Lead.
- * Pure domain model without JPA annotations.
+ * Domain Entity representing a Tyre Requirement (Lead).
  */
 @Getter
 @Setter
@@ -20,62 +17,57 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Lead {
     private UUID id;
-    private String customerName;
-    private String customerPhone;
-    private String customerEmail;
-    private String vehicleModel;
-    private String vehicleYear;
-    private LeadStatus status;
-    private int leadCost;
-    private UUID purchasedByDealerId;
-    private LocalDateTime createdAt;
-    private LocalDateTime purchasedAt;
-    private Set<UUID> skippedByDealerIds = new HashSet<>();
 
+    // Customer Details
+    private UUID customerId;
+    private String customerMobile; // Denormalized for quick access
+
+    // Requirement Details
+    private String vehicleType; // 2W, 3W, 4W
+    private String tyreType; // New, Used
+    private String tyreBrand;
+    private String vehicleModel;
+    private String locationArea;
+    private String locationPincode;
+
+    // Status & Flow
+    private LeadStatus status;
+    private UUID selectedDealerId;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime verifiedAt;
 
     public Lead() {
         this.status = LeadStatus.NEW;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void markAsBought(UUID dealerId) {
-        if (dealerId == null) {
-            throw new IllegalArgumentException("Dealer ID cannot be null");
+    public void verify() {
+        if (this.status != LeadStatus.NEW) {
+            throw new IllegalStateException("Only NEW leads can be verified.");
         }
-        if (this.status == LeadStatus.BOUGHT) {
-            throw new IllegalStateException("Lead is already bought");
-        }
-        if (this.status == LeadStatus.EXPIRED || this.status == LeadStatus.CANCELLED) {
-            throw new IllegalStateException("Cannot buy an expired or cancelled lead");
-        }
-        this.status = LeadStatus.BOUGHT;
-        this.purchasedByDealerId = dealerId;
-        this.purchasedAt = LocalDateTime.now();
+        this.status = LeadStatus.VERIFIED;
+        this.verifiedAt = LocalDateTime.now();
     }
 
-//    public void markAsFollowUp() {
-//        if (this.status != LeadStatus.NEW) {
-//            throw new IllegalStateException("Only new leads can be marked as follow-up");
-//        }
-//        this.status = LeadStatus.FOLLOW_UP;
-//    }
-
-    public void expire() {
-        if (this.status == LeadStatus.BOUGHT) {
-            throw new IllegalStateException("Cannot expire a bought lead");
+    public void markOfferReceived() {
+        if (this.status == LeadStatus.VERIFIED) {
+            this.status = LeadStatus.OFFER_RECEIVED;
         }
-        this.status = LeadStatus.EXPIRED;
     }
 
-    public void addSkip(UUID dealerId) {
-        if (this.skippedByDealerIds == null) {
-            this.skippedByDealerIds = new HashSet<>();
+    public void selectDealer(UUID dealerId) {
+        if (this.status != LeadStatus.OFFER_RECEIVED && this.status != LeadStatus.VERIFIED) {
+            throw new IllegalStateException("Can only select dealer for verified leads or leads with offers.");
         }
-        this.skippedByDealerIds.add(dealerId);
+        this.status = LeadStatus.DEALER_SELECTED;
+        this.selectedDealerId = dealerId;
     }
 
-    public boolean isAvailable() {
-        return this.status == LeadStatus.NEW && this.purchasedByDealerId == null;
+    public void close() {
+        if (this.status != LeadStatus.DEALER_SELECTED) {
+            throw new IllegalStateException("Can only close leads that have a selected dealer.");
+        }
+        this.status = LeadStatus.CLOSED;
     }
 }
-

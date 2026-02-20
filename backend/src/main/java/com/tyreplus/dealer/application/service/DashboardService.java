@@ -39,46 +39,44 @@ public class DashboardService {
 
         // 2. Fetch Stats Today (Database count is O(1) or O(log n) vs O(n) in Java)
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-        int leadsToday = (int) leadRepository.countByPurchasedByDealerIdAndCreatedAtAfter(dealerId, startOfToday);
+        int leadsToday = (int) leadRepository.countBySelectedDealerIdAndCreatedAtAfter(dealerId, startOfToday);
 
         // 3. Calculate Conversion Rate
         // Definition: (Converted Leads / Total Leads Purchased by this Dealer)
-        long totalPurchased = leadRepository.countByPurchasedByDealerId(dealerId);
-        long convertedCount = leadRepository.countByPurchasedByDealerIdAndStatus(dealerId, LeadStatus.CONVERTED);
+        long totalPurchased = leadRepository.countBySelectedDealerId(dealerId);
+        long convertedCount = leadRepository.countBySelectedDealerIdAndStatus(dealerId, LeadStatus.CLOSED);
 
         int conversionRate = totalPurchased > 0
                 ? (int) ((convertedCount * 100) / totalPurchased)
                 : 0;
 
         // 4. Get Recent Leads (Limit to 10 at the DB level)
-        List<Lead> recentLeadsRaw = leadRepository.findRecentPurchases(dealerId, 10);
+        List<Lead> recentLeadsRaw = leadRepository.findRecentSelections(dealerId, 10);
 
         List<DashboardResponse.RecentLead> recentLeads = recentLeadsRaw.stream()
                 .map(lead -> new DashboardResponse.RecentLead(
                         lead.getId().toString(),
-                        lead.getCustomerName(),
+                        lead.getCustomerMobile() != null ? lead.getCustomerMobile() : "Hidden", // Or placeholder name
                         formatVehicleInfo(lead),
                         lead.getStatus().name(),
-                        formatTimestamp(lead.getCreatedAt())
-                ))
+                        formatTimestamp(lead.getCreatedAt())))
                 .collect(Collectors.toList());
 
         return new DashboardResponse(
                 walletBalance,
                 new DashboardResponse.DashboardStats(leadsToday, conversionRate),
-                recentLeads
-        );
+                recentLeads);
     }
 
     private String formatVehicleInfo(Lead lead) {
         String model = lead.getVehicleModel() != null ? lead.getVehicleModel() : "Unknown Vehicle";
-        String year = lead.getVehicleYear() != null ? " " + lead.getVehicleYear() : "";
-        return model + year;
+        String type = lead.getVehicleType() != null ? " (" + lead.getVehicleType() + ")" : "";
+        return model + type;
     }
 
     private String formatTimestamp(LocalDateTime timestamp) {
-        if (timestamp == null) return "";
+        if (timestamp == null)
+            return "";
         return timestamp.format(DateTimeFormatter.ofPattern("hh:mm a"));
     }
 }
-

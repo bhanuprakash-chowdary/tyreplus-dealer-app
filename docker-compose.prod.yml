@@ -22,14 +22,6 @@ services:
       - tyreplus-network
     restart: always
 
-  redis:
-    image: redis:7-alpine
-    container_name: tyreplus-redis
-    # No ports mapping needed if ONLY the app uses Redis (Security Best Practice)
-    networks:
-      - tyreplus-network
-    restart: always
-
   app:
     image: ravillabhanu/tyreplus-dealer-app:1.0.0
     container_name: tyreplus-dealer-app
@@ -39,7 +31,6 @@ services:
       # Use 'prod' for production - disables DEBUG logs from your local file
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: postgres
-      REDIS_HOST: redis
       DB_NAME: tyreplus_dealer_db
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -49,8 +40,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
     networks:
       - tyreplus-network
     restart: always

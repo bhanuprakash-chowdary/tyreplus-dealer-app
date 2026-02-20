@@ -8,7 +8,8 @@ public record ContactDetails(
         String email,
         String phoneNumber,
         String alternatePhoneNumber
-) {
+)
+{
     public ContactDetails {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be null or blank");
