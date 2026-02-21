@@ -17,6 +17,9 @@
  *           Fix: Create frontend/web/app/login/page.tsx that opens OtpModal
  *
  *   BUG-2: otp-modal.tsx handlePhoneSubmit() simulates the API call with
+ *           setTimeout() instead of calling authService.sendCustomerOtp()
+ *           Fix: Call authService.sendCustomerOtp(phone) and handle errors
+ *
  *   BUG-3: api-config.ts uses /auth/customer/send-otp and /auth/customer/verify-otp
  *           Backend CustomerAuthController is at /api/v1/auth/customer/* ✓ (these MATCH)
  *           Note: test-e2e.js incorrectly references dealer endpoint for customer flow
