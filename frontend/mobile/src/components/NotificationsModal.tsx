@@ -8,12 +8,6 @@ interface NotificationsModalProps {
     onClose: () => void;
 }
 
-const MOCK_NOTIFICATIONS = [
-    { id: '1', title: 'New Lead Assigned', message: 'You have a new lead for JK Tyres.', time: '2m ago' },
-    { id: '2', title: 'Wallet Low', message: 'Your balance is below ₹500. Recharge now.', time: '1h ago', urgent: true },
-    { id: '3', title: 'Welcome to TyrePlus', message: 'Complete your profile to get verified.', time: '1d ago' },
-];
-
 export default function NotificationsModal({ visible, onClose }: NotificationsModalProps) {
     return (
         <Modal visible={visible} animationType="fade" transparent>
@@ -27,7 +21,7 @@ export default function NotificationsModal({ visible, onClose }: NotificationsMo
                     </View>
 
                     <FlatList
-                        data={MOCK_NOTIFICATIONS}
+                        data={[]}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}
                         renderItem={({ item }) => (

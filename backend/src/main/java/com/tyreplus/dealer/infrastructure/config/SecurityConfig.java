@@ -40,9 +40,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Specific auth sub-paths that require authentication must come BEFORE
+                        // the broad /auth/** permitAll rule so Spring evaluates them first.
+                        .requestMatchers("/api/v1/auth/dealer/password").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/dealer/**").authenticated()
                         .requestMatchers("/api/v1/leads/**").authenticated()
+                        .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         // Allow static resources for frontend
                         .requestMatchers("/", "/index.html", "/static/**", "/*.js", "/*.css", "/*.ico", "/*.png",
                                 "/*.json", "/_next/**")

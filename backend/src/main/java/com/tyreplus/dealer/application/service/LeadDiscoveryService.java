@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -72,12 +73,14 @@ public class LeadDiscoveryService {
             }
         }
 
-        // 2. Setup Pagination (Sort is handled inside the @Query using the String
-        // param)
-        Pageable pageable = PageRequest.of(page, size);
+        // 2. Setup Pagination
+        Sort sortObj = "date_asc".equalsIgnoreCase(sort)
+                ? Sort.by(Sort.Direction.ASC, "createdAt")
+                : Sort.by(Sort.Direction.DESC, "createdAt");
+        Pageable pageable = PageRequest.of(page, size, sortObj);
 
         // 3. Map the Page of Domain entities to Page of Response DTOs
-        return leadRepository.findLeadsWithFilters(status, dealerId, sort, pageable)
+        return leadRepository.findLeadsWithFilters(status, dealerId, pageable)
                 .map(this::mapToResponse);
     }
 

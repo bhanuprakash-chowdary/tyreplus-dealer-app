@@ -39,17 +39,14 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID>, J
         @Query("SELECT l FROM LeadJpaEntity l WHERE l.id = :id")
         Optional<LeadJpaEntity> findByIdWithLock(@Param("id") UUID id);
 
-        @Query("SELECT l FROM LeadJpaEntity l " +
-                        "WHERE (:status IS NULL OR l.status = :status) " +
-                        // "AND (:dealerId NOT MEMBER OF l.skippedByDealerIds) " +
-                        "AND (l.selectedDealerId IS NULL) " +
-                        "ORDER BY " +
-                        "CASE WHEN :sort = 'date_asc' THEN l.createdAt END ASC, " +
-                        "CASE WHEN :sort = 'date_desc' THEN l.createdAt END DESC")
-        Page<LeadJpaEntity> findLeadsWithFilters(
+        // All available leads (no status filter)
+        @Query("SELECT l FROM LeadJpaEntity l WHERE l.selectedDealerId IS NULL")
+        Page<LeadJpaEntity> findAvailableLeads(Pageable pageable);
+
+        // Available leads filtered by status
+        @Query("SELECT l FROM LeadJpaEntity l WHERE l.status = :status AND l.selectedDealerId IS NULL")
+        Page<LeadJpaEntity> findAvailableLeadsByStatus(
                         @Param("status") LeadStatus status,
-                        @Param("dealerId") UUID dealerId,
-                        @Param("sort") String sort,
                         Pageable pageable);
 
         // Returns a paginated list of leads won by a particular dealer

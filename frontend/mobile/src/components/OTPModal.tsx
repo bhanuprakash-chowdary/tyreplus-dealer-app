@@ -17,7 +17,7 @@ export default function OTPModal({
     onVerify,
     phoneNumber,
 }: OTPModalProps) {
-    const [otp, setOtp] = useState(['', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '']);
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
 
     const handleOtpChange = (value: string, index: number) => {
@@ -30,7 +30,7 @@ export default function OTPModal({
         setOtp(newOtp);
 
         // Auto-focus next input
-        if (value && index < 2) {
+        if (value && index < 3) {
             inputRefs.current[index + 1]?.focus();
         }
     };
@@ -43,16 +43,16 @@ export default function OTPModal({
 
     const handleVerify = () => {
         const otpString = otp.join('');
-        if (otpString.length !== 3) {
-            Alert.alert('Error', 'Please enter a valid 3-digit OTP');
+        if (otpString.length !== 4) {
+            Alert.alert('Error', 'Please enter a valid 4-digit OTP');
             return;
         }
         onVerify(otpString);
-        setOtp(['', '', '']);
+        setOtp(['', '', '', '']);
     };
 
     const handleClose = () => {
-        setOtp(['', '', '']);
+        setOtp(['', '', '', '']);
         onClose();
     };
 
@@ -69,7 +69,7 @@ export default function OTPModal({
                     <Text style={styles.title}>Enter OTP</Text>
                     {phoneNumber && (
                         <Text style={styles.subtitle}>
-                            We've sent a 3-digit code to {phoneNumber}
+                            We've sent a 4-digit code to {phoneNumber}
                         </Text>
                     )}
 

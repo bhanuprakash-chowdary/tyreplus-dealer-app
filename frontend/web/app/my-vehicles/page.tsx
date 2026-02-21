@@ -1,14 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { VehicleCard } from "@/components/vehicle-card"
-import { mockVehicles } from "@/lib/mock-data"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { AddVehicleModal } from "@/components/add-vehicle-modal"
+import { vehicleService, type Vehicle } from "@/lib/services/vehicle-service"
 
 export default function MyVehiclesPage() {
-    const [vehicles, setVehicles] = useState(mockVehicles)
+    const [vehicles, setVehicles] = useState<Vehicle[]>([])
+
+    useEffect(() => {
+        vehicleService.getVehicles().then((res) => {
+            if (res.data) setVehicles(res.data)
+        }).catch(() => {
+            // endpoint may not exist yet; leave list empty
+        })
+    }, [])
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingVehicle, setEditingVehicle] = useState<any>(null)
 

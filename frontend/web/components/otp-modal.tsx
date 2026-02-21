@@ -36,12 +36,17 @@ export function OtpModal({ isOpen, onClose, onSuccess, initialPhone, name }: Otp
   const handlePhoneSubmit = async () => {
     if (phone.length !== 10) return
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1000))
-    setIsLoading(false)
-    setStep("otp")
-    setTimer(30)
-    setTimeout(() => otpRefs.current[0]?.focus(), 100)
+    try {
+      await authService.sendCustomerOtp(phone)
+      setStep("otp")
+      setTimer(30)
+      setTimeout(() => otpRefs.current[0]?.focus(), 100)
+    } catch (error) {
+      console.error("Failed to send OTP", error)
+      alert("Failed to send OTP. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleOtpChange = (index: number, value: string) => {
@@ -108,11 +113,17 @@ export function OtpModal({ isOpen, onClose, onSuccess, initialPhone, name }: Otp
   const handleResendOtp = async () => {
     if (timer > 0) return
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setIsLoading(false)
-    setTimer(30)
-    setOtp(["", "", "", ""])
-    otpRefs.current[0]?.focus()
+    try {
+      await authService.sendCustomerOtp(phone)
+      setTimer(30)
+      setOtp(["", "", "", ""])
+      otpRefs.current[0]?.focus()
+    } catch (error) {
+      console.error("Failed to resend OTP", error)
+      alert("Failed to resend OTP. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {

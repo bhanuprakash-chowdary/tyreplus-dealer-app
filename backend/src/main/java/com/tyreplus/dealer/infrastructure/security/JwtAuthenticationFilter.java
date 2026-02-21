@@ -44,12 +44,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             final String jwt = authHeader.substring(7);
             final String mobile = jwtUtil.extractUsername(jwt); // Username is the mobile
+            logger.info("JWT Validation: Extracted mobile from token: " + mobile);
 
             if (mobile != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 // Fetch the full UserDetails (DealerDetails) from our service
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(mobile);
+                logger.info("JWT Validation: Loaded UserDetails for: " + userDetails.getUsername());
 
                 if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+                    logger.info("JWT Validation: Token is VALID for " + userDetails.getUsername()
+                            + ", setting Authentication");
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, // Passing the full object here
                             null,
@@ -58,7 +62,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // This is the magic line that makes @AuthenticationPrincipal work
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    logger.warn("JWT Validation: validateToken returned FALSE for " + userDetails.getUsername());
                 }
+            } else {
+                logger.warn("JWT Validation: mobile was null (" + mobile + ") OR Context already has authentication");
             }
         } catch (Exception e) {
             logger.error("Authentication failed for URI: " + request.getRequestURI() + " | Header: "

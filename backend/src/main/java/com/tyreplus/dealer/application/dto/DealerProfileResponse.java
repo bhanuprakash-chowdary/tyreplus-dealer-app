@@ -5,6 +5,7 @@ package com.tyreplus.dealer.application.dto;
  * Java 21 Record following DDD principles.
  */
 public record DealerProfileResponse(
+        String id,
         String businessName,
         String ownerName,
         boolean isVerified,

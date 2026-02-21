@@ -37,7 +37,12 @@ const BRANDS = [
     'Goodyear', 'Continental', 'Yokohama', 'Pirelli', 'Dunlop', 'TVS',
 ];
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Full Java DayOfWeek enum names required by backend
+const WEEKDAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const WEEKDAY_LABELS: Record<string, string> = {
+    MONDAY: 'Mon', TUESDAY: 'Tue', WEDNESDAY: 'Wed',
+    THURSDAY: 'Thu', FRIDAY: 'Fri', SATURDAY: 'Sat', SUNDAY: 'Sun',
+};
 
 export default function EditProfileScreen({ navigation }: Props) {
     const [formData, setFormData] = useState({
@@ -71,20 +76,22 @@ export default function EditProfileScreen({ navigation }: Props) {
     const loadProfile = async () => {
         try {
             const profile = await getProfile() as any;
+            // Backend returns address as a flat string; put it in the street field
+            const flatAddress = typeof profile.address === 'string' ? profile.address : '';
             setFormData({
                 businessName: profile.businessName || '',
                 ownerName: profile.ownerName || '',
                 gstNumber: profile.gstNumber || '',
                 yearsInBusiness: profile.yearsInBusiness || '',
-                mobile: profile.mobile?.replace('+91 ', '') || '',
+                mobile: profile.mobile || '',
                 email: profile.email || '',
                 whatsapp: profile.whatsapp || '',
-                shopNumber: profile.address?.shopNumber || '',
-                street: profile.address?.street || '',
-                city: profile.address?.city || '',
-                state: profile.address?.state || '',
-                pincode: profile.address?.pincode || '',
-                landmark: profile.address?.landmark || '',
+                shopNumber: '',
+                street: flatAddress,
+                city: '',
+                state: '',
+                pincode: '',
+                landmark: '',
                 openTime: profile.businessHours?.openTime || '',
                 closeTime: profile.businessHours?.closeTime || '',
                 openDays: profile.businessHours?.openDays || [],
@@ -112,7 +119,24 @@ export default function EditProfileScreen({ navigation }: Props) {
 
     const handleSave = async () => {
         try {
-            await updateProfile(formData);
+            const payload = {
+                businessName: formData.businessName,
+                ownerName: formData.ownerName,
+                mobile: formData.mobile,
+                email: formData.email,
+                address: {
+                    street: [formData.shopNumber, formData.street].filter(Boolean).join(', '),
+                    city: formData.city,
+                    state: formData.state,
+                    pincode: formData.pincode,
+                },
+                businessHours: {
+                    openTime: formData.openTime,
+                    closeTime: formData.closeTime,
+                    openDays: formData.openDays, // already full DayOfWeek enum values
+                },
+            };
+            await updateProfile(payload);
             Alert.alert('Success', 'Profile updated successfully!', [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
@@ -345,7 +369,7 @@ export default function EditProfileScreen({ navigation }: Props) {
                                     <Text style={[
                                         styles.dayText,
                                         formData.openDays.includes(day) && styles.dayTextActive
-                                    ]}>{day}</Text>
+                                    ]}>{WEEKDAY_LABELS[day]}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>

@@ -77,6 +77,7 @@ public class DealerProfileService {
 
     private DealerProfileResponse mapToResponse(Dealer dealer) {
         return new DealerProfileResponse(
+                dealer.getId() != null ? dealer.getId().toString() : null,
                 dealer.getBusinessName(),
                 dealer.getOwnerName(),
                 dealer.isVerified(),

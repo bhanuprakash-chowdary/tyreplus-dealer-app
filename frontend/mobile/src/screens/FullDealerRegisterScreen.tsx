@@ -13,7 +13,7 @@ import { RootStackParamList, FullDealerFormData } from '../types';
 import Header from '../components/Header';
 import OTPModal from '../components/OTPModal';
 import { COLORS } from '../constants/theme';
-import { registerDealer } from '../services/api';
+import { registerDealer, sendOtp } from '../services/api';
 
 type FullDealerRegisterScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -135,15 +135,41 @@ export default function FullDealerRegisterScreen({ navigation }: Props) {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (validateStep3()) {
-            setOtpModalVisible(true);
+            try {
+                await sendOtp(formData.mobile);
+                setOtpModalVisible(true);
+            } catch (error) {
+                Alert.alert('Error', 'Failed to send OTP. Please check your network and mobile number.');
+            }
         }
     };
 
     const handleOtpVerify = async (otp: string) => {
         try {
-            await registerDealer(formData);
+            // Transform flat formData into the shape backend RegisterRequest expects
+            const payload = {
+                businessName: formData.businessName,
+                ownerName: formData.ownerName,
+                mobile: formData.mobile,
+                email: formData.email,
+                otp,
+                password: formData.password,
+                address: {
+                    street: formData.shopAddress,
+                    city: formData.city,
+                    state: formData.state,
+                    pincode: formData.pincode,
+                },
+                businessHours: {
+                    openTime: '09:00',
+                    closeTime: '18:00',
+                    // Java DayOfWeek enum values (MONDAY, TUESDAY, …)
+                    openDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
+                },
+            };
+            await registerDealer(payload);
             setOtpModalVisible(false);
             Alert.alert(
                 'Success',

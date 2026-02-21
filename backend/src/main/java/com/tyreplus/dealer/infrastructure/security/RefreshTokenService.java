@@ -1,6 +1,8 @@
 package com.tyreplus.dealer.infrastructure.security;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -25,7 +27,7 @@ public class RefreshTokenService {
     public UUID validate(String token) {
         String value = tokenStore.get("refresh:" + token);
         if (value == null) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
         }
         return UUID.fromString(value);
     }

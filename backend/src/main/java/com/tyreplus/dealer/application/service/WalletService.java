@@ -96,6 +96,8 @@ public class WalletService {
                                         "INR",
                                         razorpayAdapter.getKeyId(),
                                         pkg.getName());
+                } catch (IllegalArgumentException e) {
+                        throw e; // let GlobalExceptionHandler return 400
                 } catch (Exception e) {
                         throw new RuntimeException("Failed to initiate payment with gateway", e);
                 }

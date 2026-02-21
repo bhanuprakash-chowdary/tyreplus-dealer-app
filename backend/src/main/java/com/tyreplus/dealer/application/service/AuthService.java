@@ -220,19 +220,25 @@ public class AuthService {
 
     private Dealer createGuestDealer(String mobile) {
         // Create a minimal "Guest" dealer
+        // Use a placeholder email so the NOT NULL DB constraint is satisfied.
+        // This is never used for communication — it's overwritten when the dealer
+        // completes their profile.
         ContactDetails contactDetails = new ContactDetails(
-                null, // No email yet
+                "guest_" + mobile + "@noemail.local",
                 mobile,
                 null);
 
         // Placeholder address
         Address address = new Address("Unknown", "Unknown", "Unknown", "000000", "India");
 
-        // Placeholder business hours
+        // Placeholder business hours — default to Mon–Sat
         BusinessHours businessHours = new BusinessHours(
                 LocalTime.parse("09:00"),
                 LocalTime.parse("21:00"),
-                new HashSet<>());
+                new HashSet<>(java.util.Set.of(
+                        java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY,
+                        java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.THURSDAY,
+                        java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY)));
 
         Dealer dealer = Dealer.builder()
                 .businessName("Guest Dealer")

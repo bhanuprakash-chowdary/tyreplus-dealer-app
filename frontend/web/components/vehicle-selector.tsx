@@ -270,15 +270,16 @@ export function VehicleSelector({ onSearch }: VehicleSelectorProps) {
     try {
       const payload = {
         vehicleType: search.vehicleType,
-        make: search.make,
-        model: search.model,
-        variant: search.variant,
+        tyreType: "NEW", // Enforce NEW for buy flow
+        tyreBrand: data.preferences.includes("Genuine brand only") ? "OEM/Premium" : "Any",
+        vehicleModel: `${search.make} ${search.model} ${search.variant}`,
+        locationArea: search.city || search.state || "Unknown",
+        locationPincode: search.pincode,
+        // The following are additional fields that aren't strict validation constraints on the DTO but are useful to send
         tyreSize: search.tyreSize,
         tyrePosition: search.tyrePosition?.join(", ") || "Both",
-        pincode: search.pincode,
-        // Optional mapping from questionnaire
         urgency: data.urgency,
-        quantity: 1, // Defaulting to 1 for simplicity, can be dynamic
+        quantity: 1,
       }
 
       const response = await leadService.createLead(payload)

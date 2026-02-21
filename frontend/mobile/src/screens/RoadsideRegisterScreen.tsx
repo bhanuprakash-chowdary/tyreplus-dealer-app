@@ -13,7 +13,7 @@ import { RootStackParamList, RoadsideFormData } from '../types';
 import Header from '../components/Header';
 import OTPModal from '../components/OTPModal';
 import { COLORS } from '../constants/theme';
-import { registerRoadsideDealer } from '../services/api';
+import { registerRoadsideDealer, sendOtp } from '../services/api';
 
 type RoadsideRegisterScreenNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -43,7 +43,7 @@ export default function RoadsideRegisterScreen({ navigation }: Props) {
         setFormData({ ...formData, location: 'Current Location (Demo)' });
     };
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (!formData.name || !formData.mobile || !formData.location || !formData.password) {
             Alert.alert('Error', 'Please fill all required fields');
             return;
@@ -52,7 +52,12 @@ export default function RoadsideRegisterScreen({ navigation }: Props) {
             Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
             return;
         }
-        setOtpModalVisible(true);
+        try {
+            await sendOtp(formData.mobile);
+            setOtpModalVisible(true);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to send OTP.');
+        }
     };
 
     const handleOtpVerify = async (otp: string) => {

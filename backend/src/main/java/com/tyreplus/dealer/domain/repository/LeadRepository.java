@@ -50,7 +50,7 @@ public interface LeadRepository {
 
     void flush();
 
-    Page<Lead> findLeadsWithFilters(LeadStatus status, UUID dealerId, String sort, Pageable pageable);
+    Page<Lead> findLeadsWithFilters(LeadStatus status, UUID dealerId, Pageable pageable);
 
     Page<Lead> findLeadsBySelectedDealer(UUID dealerId, Pageable pageable);
 }
